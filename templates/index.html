@@ -38,7 +38,21 @@
             text-align: center; /* Center-align the text */
             opacity: 1; /* Initially visible */
             transition: opacity 0.5s ease-in-out; /* CSS transition for opacity */
+            color: #04cf5c;
+            font-size: 72px;
+            .spinner-border {
+            --bs-spinner-width: 8rem;
+            --bs-spinner-height: 8rem;
+            --bs-spinner-vertical-align: -0.125em;
+            --bs-spinner-border-width: 0.25em;
+            --bs-spinner-animation-speed: 1.75s;
+            --bs-spinner-animation-name: spinner-border;
+            border: var(--bs-spinner-border-width) solid currentcolor;
+            border-right-color: transparent;
+}
         }
+
+        
 
         .green-box-right {
             position: absolute;
@@ -78,8 +92,8 @@
     </style>
 </head>
 <body>
-    <div class="camera-background">
-        <div id="myDiv" class="center-box rounded-2" onclick="callFlaskRouteAndToggleDiv()">
+    <div class="camera-background" onclick="callFlaskRouteAndToggleDiv()">
+        <div id="myDiv" class="center-box rounded-2">
             <h1 style="font-size: 75px;">TRYK HER</h1>
             <div class="green-box-right rounded-2">
                 <h4>FOR SELFIE</h4>
@@ -88,8 +102,8 @@
                 <h4 class="fw-light">LYD & LYS</h4>
             </div>
         </div>
-        <div id="spinner" class="pre-loader" style="opacity: 0;">
-            <div class="spinner-border text-primary" role="status">
+        <div id="spinner" class="pre-loader" style="opacity: 0; color: #04cf5c;">
+            <div class="spinner-border text-white" role="status" style="">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
