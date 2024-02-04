@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Background App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <style>
+        .camera-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1280px;
+            height: 800px;
+            background-color: #ccc;
+        }
+        .center-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: black;
+            color: white;
+            padding: 20px;
+            animation: pulse 1s infinite alternate;
+            width: 430px; /* Set the width of the center box */
+            text-align: center; /* Center-align the text */
+            opacity: 1; /* Initially visible */
+            transition: opacity 0.5s ease-in-out; /* CSS transition for opacity */
+        }
+
+        .pre-loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            text-align: center; /* Center-align the text */
+            opacity: 1; /* Initially visible */
+            transition: opacity 0.5s ease-in-out; /* CSS transition for opacity */
+        }
+
+        .green-box-right {
+            position: absolute;
+            top: 115px;
+            right: -20px;
+            width: 150px;
+            height: 40px;
+            background-color: #04cf5c;
+            display: flex; /* Enable flex layout to center text vertically and horizontally */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+        }
+
+        .green-box-left {
+            position: absolute;
+            top: -20px;
+            right: 300px;
+            width: 150px;
+            height: 40px;
+            background-color: #04cf5c;
+            display: flex; /* Enable flex layout to center text vertically and horizontally */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+        .hidden {
+            opacity: 0; /* Hidden when opacity is 0 */
+        }
+    </style>
+</head>
+<body>
+    <div class="camera-background">
+        <div id="myDiv" class="center-box rounded-2" onclick="callFlaskRouteAndToggleDiv()">
+            <h1 style="font-size: 75px;">TRYK HER</h1>
+            <div class="green-box-right rounded-2">
+                <h4>FOR SELFIE</h4>
+            </div>
+            <div class="green-box-left rounded-2">
+                <h4 class="fw-light">LYD & LYS</h4>
+            </div>
+        </div>
+        <div id="spinner" class="pre-loader" style="opacity: 0;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+    </div>
+</body>
+<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+    function callFlaskRouteAndToggleDiv() {
+
+        const myDiv = document.getElementById('myDiv');
+        const spinner = document.getElementById('spinner');
+            myDiv.style.opacity = 0; // Set opacity to 0 to make it fade out
+            setTimeout(() => {
+                myDiv.classList.add('hidden');
+                spinner.style.opacity = '1'
+            }, 500); 
+        fetch('/initate')
+            .then(response => response.json())
+            .then(data => {
+                if (data.hide) {
+                    console.log('TEST')
+                    spinner.style.opacity = '0'
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+</html>
