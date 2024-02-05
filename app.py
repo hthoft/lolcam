@@ -23,6 +23,16 @@ def initiate():
     time.sleep(5)  # Use time.sleep for delays
     return jsonify({'hide': True})
 
+@app.route("/capture", methods=['POST'])
+def capture():
+    try:
+        image_data = picam2.capture_bytes(format='jpeg')
+        with open('captured_photo.jpg', 'wb') as f:
+            f.write(image_data)
+        
+        return jsonify({"success": True, "message": "Photo captured and saved successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/settings", methods=['GET', 'POST'])
 def settings():
@@ -31,11 +41,9 @@ def settings():
         networks = [(cell.signal, cell.ssid) for cell in scanner]
         return jsonify(networks)
     elif request.method == 'POST':
-        data = request.get_json()  # Get the JSON data
-        selected_ssid = data['ssidSelection']
-        password = data['wifiPassword']
+        selected_ssid = request.form['ssidSelection']
+        password = request.form['wifiPassword']
         try:
-            scanner = wifi.Cell.all('wlan0')
             for cell in scanner:
                 if cell.ssid == selected_ssid:
                     scheme = wifi.Scheme.for_cell('wlan0', cell.ssid, cell, password)
