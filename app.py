@@ -3,6 +3,7 @@ from picamera2 import Picamera2
 import time
 import cv2
 import numpy as np
+import wifi
 
 app = Flask(__name__)
 
@@ -25,7 +26,10 @@ def initiate():
 
 @app.route("/settings", methods=['POST', 'GET'])
 def settings():
-   pass 
+    scanner = wifi.Cell.all('wlan0')
+    networks = [(cell.signal, cell.ssid) for cell in scanner]
+    print(networks)
+    return jsonify(networks) 
 
 # Stream the camera feed
 @app.route('/video')
