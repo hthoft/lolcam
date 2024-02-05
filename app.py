@@ -54,14 +54,14 @@ def capture():
         picam2.capture_file(filename)
         
         # Upload the image to Google Drive
-        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['YOUR_PARENT_FOLDER_ID']}
-        media = io.FileIO(filename, mode='rb')
+        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['13dQff2uQ65XAKVc9CRZcNXnkUZwzTgzX']}
+        media = open(filename, 'rb')
         drive_file = drive_service.files().create(body=file_metadata, media_body=media).execute()
 
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-
+    
 @app.route("/settings", methods=['GET', 'POST'])
 def settings():
     if request.method == 'GET':
