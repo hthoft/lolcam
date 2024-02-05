@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+from googleapiclient.http import MediaFileUpload
 import wifi
 import io
 import os
@@ -55,13 +56,14 @@ def capture():
         
         # Upload the image to Google Drive
         file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['13dQff2uQ65XAKVc9CRZcNXnkUZwzTgzX']}
-        media = open(filename, 'rb')
-        drive_file = drive_service.files().create(body=file_metadata, media_body=media).execute()
+        media_body = MediaFileUpload(filename, mimetype='image/jpeg')  # Specify the mimetype
+        drive_file = drive_service.files().create(body=file_metadata, media_body=media_body).execute()
 
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     
+     
 @app.route("/settings", methods=['GET', 'POST'])
 def settings():
     if request.method == 'GET':
