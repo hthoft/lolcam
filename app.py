@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Initialize the Pi Camera
 picam2 = Picamera2()
-preview_config = picam2.create_preview_configuration(main={"size": (640, 480)})
+preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
 
