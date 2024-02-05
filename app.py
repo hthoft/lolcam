@@ -1,6 +1,8 @@
 from flask import Flask, render_template, jsonify, Response
 from picamera2 import Picamera2
 import time
+import cv2
+import numpy as np
 
 app = Flask(__name__)
 
@@ -17,7 +19,7 @@ def home():
 @app.route("/initiate", methods=['POST', 'GET'])
 def initiate():
     print("Starting cam")
-    time.sleep(5)  # Corrected sleep function call
+    time.sleep(5)  # Use time.sleep for delays
     return jsonify({'hide': True})
 
 # Stream the camera feed
@@ -28,8 +30,15 @@ def video():
 def generate_frames():
     while True:
         frame = picam2.capture_array()  # Capture frame as a numpy array
+        # Convert the color space from BGR (OpenCV default) to RGB
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Encode the frame in JPEG format
+        (flag, encodedImage) = cv2.imencode(".jpg", frame)
+        if not flag:
+            continue
+        # Yield the encoded frame
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
 if __name__ == '__main__':
     try:
