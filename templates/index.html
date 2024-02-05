@@ -126,7 +126,7 @@
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
-
+        <div id="backdoor" onclick="handleBackdoorClick(event)" style="width: 50px; height: 50px; position: absolute; top: 0; right: 0;"></div>
     </div>
     <div class="modal fade" id="consentModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -162,13 +162,27 @@
           </div>
         </div>
       </div>
-      <div>
-        
+      <div class="modal fade" id="settingsModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content bg-dark">
+            <div class="modal-header">
+              <h5 class="modal-title text-light" id="settingsModalLabel">Indstillinger</h5>
+            </div>
+          </div>
+        </div>
       </div>
 </body>
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
+    function handleBackdoorClick(event) {
+        // Prevents the event from propagating up to parent elements
+        event.stopPropagation();
+        
+        // Log to console or handle the backdoor click as needed
+        console.log('Backdoor clicked');
+    }
+
     function callFlaskRouteAndToggleDiv() {
         var consentModal = new bootstrap.Modal(document.getElementById('consentModal'), {
             keyboard: false,
