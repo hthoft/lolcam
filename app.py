@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, jsonify, Response
 from picamera2 import Picamera2
+from datetime import datetime
 import time
 import cv2
 import numpy as np
@@ -23,11 +24,11 @@ def initiate():
     time.sleep(5)  # Use time.sleep for delays
     return jsonify({'hide': True})
 
-@app.route("/capture", methods=['POST'])
+@app.route("/capture", methods=['GET'])
 def capture():
     try:
         image_data = picam2.capture_bytes(format='jpeg')
-        with open('captured_photo.jpg', 'wb') as f:
+        with open(time.now() + '.jpg', 'wb') as f:
             f.write(image_data)
         
         return jsonify({"success": True, "message": "Photo captured and saved successfully."})
