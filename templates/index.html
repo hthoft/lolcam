@@ -129,17 +129,35 @@
 
     </div>
     <div class="modal fade" id="consentModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content bg-dark">
             <div class="modal-header">
-              <h5 class="modal-title" id="consentModalLabel">Photo Consent</h5>
+              <h5 class="modal-title text-light" id="consentModalLabel">Photo Consent</h5>
             </div>
-            <div class="modal-body">
-              By clicking Accept, you consent to the taking and storing of your photo.
+            <div class="modal-body text-light">
+                <h4>Samtykke til fotografering og opbevaringspolitik</h4>
+                <p>Ved at klikke på "Acceptér" giver du dit samtykke til, at vi må tage og opbevare dit foto. Vi forpligter os til at beskytte dit privatliv og håndtere dine personlige oplysninger med største omhu og respekt.</p>
+                
+                <h5>Opbevaring af fotos</h5>
+                <p>Dine fotos vil blive opbevaret sikkert på vores server i <strong>7 dage</strong>. Denne periode giver dig mulighed for at hente og gemme dine fotos. Efter 7 dage vil fotos automatisk blive slettet fra vores systemer som en del af vores forpligtelse til at beskytte din privatlivets fred.</p>
+                
+                <h5>Sletning af fotos</h5>
+                <p>Skulle du ønske, at dit foto bliver slettet før udløbet af de 7 dage, er du velkommen til at kontakte os med en anmodning om sletning. Vi vil sørge for, at dit foto bliver slettet fra vores systemer hurtigst muligt.</p>
+                
+                <h5>Brugsret og forbehold</h5>
+                <p>Vi forbeholder os retten til at anvende fotos taget i vores SelfieBooth til interne formål, herunder forbedring af vores service. Dine fotos vil ikke blive delt med tredjeparter eller anvendt til kommercielle formål uden dit udtrykkelige forudgående samtykke.</p>
+                
+                <h5>Dine rettigheder</h5>
+                <p>Du har ret til at anmode om indsigt i de fotos, vi har opbevaret om dig, samt at få rettet eventuelle unøjagtigheder. Derudover har du ret til at gøre indsigelse mod vores behandling af dine fotos og anmode om begrænsning af behandling af dine personoplysninger.</p>
+                
+                <p>Accept af disse vilkår bekræfter, at du har læst og forstået vores politikker vedrørende opbevaring, sletning af fotos, samt dine rettigheder. Vi er dedikerede til at beskytte dit privatliv og sikre, at dine personoplysninger behandles sikkert og ansvarligt.</p>
+                
+                <p>Har du spørgsmål, eller ønsker du yderligere information om vores fotopolitik, er du altid velkommen til at kontakte os.</p>
+                
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="reset()">Decline</button>
-              <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="startCountdown()">Accept</button>
+                <button type="button" id="declineButton" class="btn btn-dark rounded-0 border-light fw-bolder fs-4" style="width: 48%!important; height: 80px;" data-bs-dismiss="modal" onclick="reset()">Afvis</button>
+                <button type="button" class="btn btn-dark border-light fw-bolder fs-4 rounded-0" style="width: 48%!important; height: 80px;"  data-bs-dismiss="modal" onclick="startCountdown()">Acceptér</button>
             </div>
           </div>
         </div>
@@ -150,14 +168,31 @@
 <script>
     function callFlaskRouteAndToggleDiv() {
         var consentModal = new bootstrap.Modal(document.getElementById('consentModal'), {
-        keyboard: false
+            keyboard: false,
+            backdrop: 'static'
         });
-        consentModal.show();
+
+        consentModal.show(); // Show the modal on page load or trigger it based on a specific action
+        document.querySelector('.camera-background').setAttribute('onclick', '');
+
+
+        let countdown = 30; // 30 seconds countdown
+        document.getElementById('declineButton').innerText = `Afvis (${countdown}s)`;
+
+        countdownInterval = setInterval(() => {
+            countdown--;
+            document.getElementById('declineButton').innerText = `Afvis (${countdown}s)`;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                consentModal.hide(); // Hide the modal
+                reset(); // Call the reset function
+            }
+        }, 1000);
     }
 
 
     function startCountdown() {
-
+        clearInterval(countdownInterval);
         let countdownValue = 3;
         const myDiv = document.getElementById('myDiv');
         myDiv.style.opacity = '0';
@@ -176,6 +211,7 @@
                 } else {
                     clearInterval(countdownInterval);
                     myDiv.innerHTML = '';
+                    myDiv.style.opacity = '0';
                     flashAndCapture();
                 }
             }, 1000);
@@ -207,9 +243,13 @@
 
 
     function reset() {
+        clearInterval(countdownInterval);
         const myDiv = document.getElementById('myDiv');
         const spinner = document.getElementById('spinner');
         const flashDiv = document.getElementById('flash');
+
+        document.querySelector('.camera-background').setAttribute('onclick', 'callFlaskRouteAndToggleDiv()');
+
 
         // Reset the content and style of myDiv to its original state
         myDiv.innerHTML = '<h1 style="font-size: 75px;">TRYK HER</h1>' +
