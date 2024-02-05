@@ -55,7 +55,7 @@ def capture():
         picam2.capture_file(filename)
         
         # Upload the image to Google Drive
-        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['13dQff2uQ65XAKVc9CRZcNXnkUZwzTgzX']}
+        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['1-V93pNb_r__Kuj5n6BY9qG2E6sgNGlI3']}
         media_body = MediaFileUpload(filename, mimetype='image/jpeg')  # Specify the mimetype
         drive_file = drive_service.files().create(body=file_metadata, media_body=media_body).execute()
 
