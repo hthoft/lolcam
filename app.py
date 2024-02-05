@@ -33,12 +33,13 @@ def settings():
     elif request.method == 'POST':
         selected_ssid = request.form['ssidSelection']
         password = request.form['wifiPassword']
-        # Here, implement your logic to change the WiFi settings
-        # For example, connect to the WiFi network using the provided SSID and password
         try:
-            # pseudo-code for connecting to a network
-            # wifi.connect(ssid=selected_ssid, password=password)
-            return jsonify({"success": True, "message": "WiFi settings updated successfully."})
+            for cell in scanner:
+                if cell.ssid == selected_ssid:
+                    scheme = wifi.Scheme.for_cell('wlan0', cell.ssid, cell, password)
+                    scheme.save()
+                    scheme.activate()
+                    return jsonify({"success": True, "message": "WiFi settings updated successfully."})
         except Exception as e:
             return jsonify({"success": False, "message": str(e)}), 400
 
