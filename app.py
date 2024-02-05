@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import wifi
 import io
+import os
 
 app = Flask(__name__)
 
@@ -14,6 +15,20 @@ picam2 = Picamera2()
 preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
+
+
+@app.before_first_request
+def create_picture_folder():
+    # Define the path for the folder
+    pictures_dir = "/home/lol/Pictures"
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    folder_path = os.path.join(pictures_dir, current_date)
+    
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Created folder: {folder_path}")
+
 
 @app.route('/')
 def home():
