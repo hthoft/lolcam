@@ -1,11 +1,14 @@
 from flask import Flask, render_template, jsonify, Response
-from picamera2 import Picamera2, PiCameraMk2Renderer
+from picamera2 import Picamera2
 import time
 
 app = Flask(__name__)
 
 # Initialize the Pi Camera
-camera = Picamera2()
+picam2 = Picamera2()
+preview_config = picam2.create_preview_configuration(main={"size": (640, 480)})
+picam2.configure(preview_config)
+picam2.start()
 
 @app.route('/')
 def home():
@@ -14,7 +17,7 @@ def home():
 @app.route("/initiate", methods=['POST', 'GET'])
 def initiate():
     print("Starting cam")
-    sleep(5)
+    time.sleep(5)  # Corrected sleep function call
     return jsonify({'hide': True})
 
 # Stream the camera feed
@@ -23,20 +26,13 @@ def video():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 def generate_frames():
-    renderer = PiCameraMk2Renderer(camera)
-    camera.start_recording('/dev/null', format='h264', resize=(640, 480))
-    camera.start_recording(renderer, format='mjpeg', resize=(640, 480))
-
-    try:
-        while True:
-            camera.wait_recording(1)
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + renderer.frame() + b'\r\n')
-    finally:
-        camera.stop_recording()
+    while True:
+        frame = picam2.capture_array()  # Capture frame as a numpy array
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
 
 if __name__ == '__main__':
     try:
         app.run(host='0.0.0.0', port=50005, debug=True, use_reloader=False)
     finally:
-        pass
+        picam2.stop()  # Ensure the camera is stopped
