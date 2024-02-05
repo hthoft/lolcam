@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -163,14 +163,39 @@
         </div>
       </div>
       <div class="modal fade" id="settingsModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-          <div class="modal-content bg-dark">
-            <div class="modal-header">
-              <h5 class="modal-title text-light" id="settingsModalLabel">Indstillinger</h5>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title text-light" id="settingsModalLabel">Indstillinger</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="wifiSettingsForm">
+                        <div class="mb-3">
+                            <label for="ssidSelection" class="form-label text-light">Netværksnavn (SSID)</label>
+                            <select class="form-select" id="ssidSelection">
+                                <option selected>Vælg et netværk</option>
+                                <!-- Dynamically populate with available SSIDs -->
+                                <option value="SSID1">SSID1</option>
+                                <option value="SSID2">SSID2</option>
+                                <option value="SSID3">SSID3</option>
+                                <!-- Add more options as needed -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wifiPassword" class="form-label text-light">Adgangskode (WPA2)</label>
+                            <input type="password" class="form-control" id="wifiPassword" placeholder="Indtast WiFi Password">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+                    <button type="submit" form="wifiSettingsForm" class="btn btn-primary">Gem Ændringer</button>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
+    </div>
+    
 </body>
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
@@ -178,9 +203,31 @@
     function handleBackdoorClick(event) {
         // Prevents the event from propagating up to parent elements
         event.stopPropagation();
+
+        var settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'), {
+            keyboard: false,
+            backdrop: 'static'
+        });
+
+        settingsModal.show();
         
         // Log to console or handle the backdoor click as needed
         console.log('Backdoor clicked');
+
+        fetch('/settings')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+
     }
 
     function callFlaskRouteAndToggleDiv() {
