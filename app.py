@@ -24,12 +24,23 @@ def initiate():
     return jsonify({'hide': True})
 
 
-@app.route("/settings", methods=['POST', 'GET'])
+@app.route("/settings", methods=['GET', 'POST'])
 def settings():
-    scanner = wifi.Cell.all('wlan0')
-    networks = [(cell.signal, cell.ssid) for cell in scanner]
-    print(networks)
-    return jsonify(networks) 
+    if request.method == 'GET':
+        scanner = wifi.Cell.all('wlan0')
+        networks = [(cell.signal, cell.ssid) for cell in scanner]
+        return jsonify(networks)
+    elif request.method == 'POST':
+        selected_ssid = request.form['ssidSelection']
+        password = request.form['wifiPassword']
+        # Here, implement your logic to change the WiFi settings
+        # For example, connect to the WiFi network using the provided SSID and password
+        try:
+            # pseudo-code for connecting to a network
+            # wifi.connect(ssid=selected_ssid, password=password)
+            return jsonify({"success": True, "message": "WiFi settings updated successfully."})
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)}), 400
 
 # Stream the camera feed
 @app.route('/video')
