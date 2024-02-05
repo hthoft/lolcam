@@ -22,6 +22,11 @@ def initiate():
     time.sleep(5)  # Use time.sleep for delays
     return jsonify({'hide': True})
 
+
+@app.route("/settings", methods=['POST', 'GET'])
+def settings():
+   pass 
+
 # Stream the camera feed
 @app.route('/video')
 def video():
