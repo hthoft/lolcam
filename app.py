@@ -35,7 +35,8 @@ def settings():
         selected_ssid = data['ssidSelection']
         password = data['wifiPassword']
         try:
-            for cell in networks:
+            scanner = wifi.Cell.all('wlan0')
+            for cell in scanner:
                 if cell.ssid == selected_ssid:
                     scheme = wifi.Scheme.for_cell('wlan0', cell.ssid, cell, password)
                     scheme.save()
