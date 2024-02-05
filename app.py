@@ -5,6 +5,7 @@ import time
 import cv2
 import numpy as np
 import wifi
+import io
 
 app = Flask(__name__)
 
@@ -27,10 +28,14 @@ def initiate():
 @app.route("/capture", methods=['GET'])
 def capture():
     try:
-        image_data = picam2.capture_bytes(format='jpeg')
-        with open(time.now() + '.jpg', 'wb') as f:
-            f.write(image_data)
+        stream = io.BytesIO()
+        picam2.capture(stream, format='jpeg')
+        image_data = stream.getvalue()
         
+        # Save the image locally with a timestamp as the filename
+        filename = str(int(time.time())) + '.jpg'
+        with open(filename, 'wb') as f:
+            f.write(image_data)
         return jsonify({"success": True, "message": "Photo captured and saved successfully."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
