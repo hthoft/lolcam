@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera Background App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <style>
         .camera-background {
             position: absolute;
@@ -78,6 +80,20 @@
             justify-content: center; /* Center horizontally */
         }
 
+        #flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            pointer-events: none; /* Ensures clicks pass through */
+            transition: opacity 0.2s ease-in-out; /* Adjust timing for faster/slower flash */
+            z-index: 10;
+        }
+
+
         @keyframes pulse {
             0% {
                 transform: translate(-50%, -50%) scale(1);
@@ -89,11 +105,13 @@
         .hidden {
             opacity: 0; /* Hidden when opacity is 0 */
         }
+        
     </style>
 </head>
 <body>
     <div class="camera-background" onclick="callFlaskRouteAndToggleDiv()">
         <img id="camera-feed" src="/video" alt="Camera Feed">
+        <div id="flash"></div>
         <div id="myDiv" class="center-box rounded-2">
             <h1 style="font-size: 75px;">TRYK HER</h1>
             <div class="green-box-right rounded-2">
@@ -110,28 +128,111 @@
         </div>
 
     </div>
+    <div class="modal fade" id="consentModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="consentModalLabel">Photo Consent</h5>
+            </div>
+            <div class="modal-body">
+              By clicking Accept, you consent to the taking and storing of your photo.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="reset()">Decline</button>
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="startCountdown()">Accept</button>
+            </div>
+          </div>
+        </div>
+      </div>
 </body>
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
     function callFlaskRouteAndToggleDiv() {
+        var consentModal = new bootstrap.Modal(document.getElementById('consentModal'), {
+        keyboard: false
+        });
+        consentModal.show();
+    }
 
+
+    function startCountdown() {
+
+        let countdownValue = 3;
+        const myDiv = document.getElementById('myDiv');
+        myDiv.style.opacity = '0';
+
+
+        setTimeout(() => {
+            myDiv.style.opacity = '1';
+            myDiv.style.backgroundColor = 'transparent'; // Make background transparent
+            myDiv.style.animation = 'none';  
+            myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>'; // Show initial countdown value
+            myDiv.classList.remove('hidden'); // Make sure the div is visible
+            const countdownInterval = setInterval(() => {
+                countdownValue--;
+                if (countdownValue > -1) {
+                    myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>';
+                } else {
+                    clearInterval(countdownInterval);
+                    myDiv.innerHTML = '';
+                    flashAndCapture();
+                }
+            }, 1000);
+        }, 700);
+    }
+
+    function flashAndCapture() {
+        // Trigger flash effect
+        const flashDiv = document.getElementById('flash');
+        flashDiv.style.opacity = '1'; // Make the flash div fully opaque
+        
+        setTimeout(() => {
+            flashDiv.style.opacity = '0'; // Fade out the flash div
+            
+            // Call Flask to capture an image after the flash
+            fetch('/capture')
+                .then(response => response.blob())
+                .then(blob => {
+                    // Here, you can process the captured image, e.g., display it or prepare for download
+                    console.log('Photo captured');
+                    setTimeout(reset, 2000); // Corrected: Reset the UI to its initial state after capturing the photo
+                })
+                .catch(error => {
+                    console.error('Error capturing photo:', error);
+                    setTimeout(reset, 2000); // Corrected: Also reset on error to allow retrying
+                });
+        }, 1000); // Adjust this timing as needed for the desired flash duration
+    }
+
+
+    function reset() {
         const myDiv = document.getElementById('myDiv');
         const spinner = document.getElementById('spinner');
-            myDiv.style.opacity = 0; // Set opacity to 0 to make it fade out
-            setTimeout(() => {
-                myDiv.classList.add('hidden');
-                spinner.style.opacity = '1'
-            }, 500); 
-        fetch('/initate')
-            .then(response => response.json())
-            .then(data => {
-                if (data.hide) {
-                    console.log('TEST')
-                    spinner.style.opacity = '0'
-                }
-            })
-            .catch(error => console.error('Error:', error));
+        const flashDiv = document.getElementById('flash');
+
+        // Reset the content and style of myDiv to its original state
+        myDiv.innerHTML = '<h1 style="font-size: 75px;">TRYK HER</h1>' +
+                        '<div class="green-box-right rounded-2">' +
+                        '<h4>FOR SELFIE</h4></div>' +
+                        '<div class="green-box-left rounded-2">' +
+                        '<h4 class="fw-light">LYD & LYS</h4></div>';
+
+        myDiv.style.backgroundColor = 'black'; // Restore the black background
+        myDiv.style.animation = 'pulse 1s infinite alternate'; // Re-enable the pulse animation
+
+        // Adjust visibility as needed
+        myDiv.style.opacity = '1';
+        spinner.style.opacity = '0';
+        flashDiv.style.opacity = '0';
+
+        // Remove the 'hidden' class if it was added
+        myDiv.classList.remove('hidden');
     }
+
+
+
+
+
 </script>
 </html>
