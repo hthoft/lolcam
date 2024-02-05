@@ -27,10 +27,12 @@ def initiate():
 
 @app.route("/capture", methods=['GET'])
 def capture():
+
     try:
-        stream = io.BytesIO()
-        picam2.capture(stream, format='jpeg')
-        image_data = stream.getvalue()
+        data = io.BytesIO()
+        image_data = picam2.capture_file(data, format='jpeg')
+        # picam2.capture(stream, format='jpeg')
+        # image_data = stream.getvalue()
         
         # Save the image locally with a timestamp as the filename
         filename = str(int(time.time())) + '.jpg'
