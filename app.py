@@ -1,11 +1,11 @@
 from flask import Flask, render_template, jsonify, Response
-from picamera2 import PiCamera, PiCameraMk2Renderer
+from picamera2 import PiCamera2, PiCameraMk2Renderer
 import time
 
 app = Flask(__name__)
 
 # Initialize the Pi Camera
-camera = PiCamera()
+camera = PiCamera2()
 
 @app.route('/')
 def home():
