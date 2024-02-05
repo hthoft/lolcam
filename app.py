@@ -42,8 +42,9 @@ def initiate():
 
 @app.route("/capture", methods=['GET'])
 def capture():
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     try:
-        picam2.capture_file("Pictures/" + str(datetime.now().minute) + ".jpg")
+        picam2.capture_file("Pictures/" + str(datetime.now().strftime("%Y-%m-%d")) + str(current_datetime) + ".jpg")
         return jsonify({"success": True, "message": "Photo captured and saved successfully."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
