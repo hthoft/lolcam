@@ -4,6 +4,8 @@ from datetime import datetime
 import time
 import cv2
 import numpy as np
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
 import wifi
 import io
 import os
@@ -15,7 +17,10 @@ picam2 = Picamera2()
 preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
+creds = service_account.Credentials.from_service_account_file('martngoogledrev8.json')
 
+# Build the Google Drive API service
+drive_service = build('drive', 'v3', credentials=creds)
 
 
 def create_picture_folder():
@@ -44,8 +49,16 @@ def initiate():
 def capture():
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     try:
-        picam2.capture_file("Pictures/" + str(datetime.now().strftime("%Y-%m-%d")) + "/" + str(current_datetime) + ".jpg")
-        return jsonify({"success": True, "message": "Photo captured and saved successfully."})
+        # Capture the image
+        filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        picam2.capture_file(filename)
+        
+        # Upload the image to Google Drive
+        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['YOUR_PARENT_FOLDER_ID']}
+        media = io.FileIO(filename, mode='rb')
+        drive_file = drive_service.files().create(body=file_metadata, media_body=media).execute()
+
+        return jsonify({"success": True, "message": "Photo captured and uploaded successfully."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -85,6 +98,8 @@ def generate_frames():
         # Yield the encoded frame
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+
+
 
 if __name__ == '__main__':
     try:
