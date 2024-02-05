@@ -31,9 +31,8 @@ def settings():
         networks = [(cell.signal, cell.ssid) for cell in scanner]
         return jsonify(networks)
     elif request.method == 'POST':
-        data = request.get_json()  # Get the JSON data
-        selected_ssid = data['ssidSelection']
-        password = data['wifiPassword']
+        selected_ssid = request.form['ssidSelection']
+        password = request.form['wifiPassword']
         try:
             for cell in scanner:
                 if cell.ssid == selected_ssid:
