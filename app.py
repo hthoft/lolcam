@@ -17,7 +17,7 @@ picam2.configure(preview_config)
 picam2.start()
 
 
-@app.before_first_request
+
 def create_picture_folder():
     # Define the path for the folder
     pictures_dir = "/home/lol/Pictures"
@@ -87,6 +87,7 @@ def generate_frames():
 
 if __name__ == '__main__':
     try:
+        create_picture_folder()
         app.run(host='0.0.0.0', port=50005, debug=True, use_reloader=False)
     finally:
         picam2.stop()  # Ensure the camera is stopped
