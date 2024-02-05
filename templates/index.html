@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
+
     <style>
         .camera-background {
             position: absolute;
@@ -92,7 +94,30 @@
             transition: opacity 0.2s ease-in-out; /* Adjust timing for faster/slower flash */
             z-index: 10;
         }
+        .hg-theme-default {
+            background-color: #04cf5c;
+        }
 
+        .hg-theme-default .hg-button {
+            align-items: center;
+            background: #000;
+            border-bottom: 0px solid #b5b5b5;
+            border-radius: 0px;
+            box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+            box-sizing: border-box;
+            cursor: pointer;
+            display: flex;
+            height: 40px;
+            justify-content: center;
+            padding: 5px;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+        .hg-row .hg-button:not(:last-child) {
+            margin-right: 1px!important;
+        }
+        .hg-theme-default .hg-row:not(:last-child) {
+            margin-bottom: 1px;
+        }
 
         @keyframes pulse {
             0% {
@@ -169,7 +194,7 @@
                     <h5 class="modal-title text-light" id="settingsModalLabel">Indstillinger</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body">                    
                     <form id="wifiSettingsForm">
                         <div class="mb-3">
                             <label for="ssidSelection" class="form-label text-light">Netværksnavn (SSID)</label>
@@ -184,9 +209,18 @@
                         </div>
                         <div class="mb-3">
                             <label for="wifiPassword" class="form-label text-light">Adgangskode (WPA2)</label>
-                            <input type="password" class="form-control" id="wifiPassword" placeholder="Indtast WiFi Password">
+                            <div class="input-group">
+                                <input type="password" class="input form-control" id="wifiPassword" placeholder="Indtast WiFi Password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <span id="togglePasswordIcon" class="bi bi-eye"></span>
+                                </button>
+                            </div>
                         </div>
+                        
                     </form>
+                    <div class="simple-keyboard"></div>
+                  
+                    <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.js"></script>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
@@ -200,6 +234,33 @@
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
+    document.getElementById('togglePassword').addEventListener('click', function (e) {
+        const passwordInput = document.getElementById('wifiPassword');
+        const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            togglePasswordIcon.className = 'bi bi-eye-slash'; // Change icon to "eye-slash"
+        } else {
+            passwordInput.type = 'password';
+            togglePasswordIcon.className = 'bi bi-eye'; // Change icon back to "eye"
+        }
+    });
+
+    const Keyboard = window.SimpleKeyboard.default;
+
+    const myKeyboard = new Keyboard({
+        onChange: input => onChange(input),
+        onKeyPress: button => onKeyPress(button)
+    });
+
+    function onChange(input) {
+    document.querySelector(".input").value = input;
+    console.log("Input changed", input);
+    }
+
+    function onKeyPress(button) {
+    console.log("Button pressed", button);
+    }
     function handleBackdoorClick(event) {
         // Prevents the event from propagating up to parent elements
         event.stopPropagation();
@@ -222,11 +283,22 @@
                 return response.json();
             })
             .then(data => {
-                console.log(data);
+                const ssidSelection = document.getElementById('ssidSelection');
+                // Clear existing options except the first one
+                ssidSelection.length = 1; // Keep the first placeholder option
+
+                // Iterate through each tuple in the data array
+                data.forEach(([signalStrength, ssid]) => {
+                    // Create a new option element with the SSID and signal strength
+                    const option = new Option(`${ssid} (${signalStrength})`, ssid);
+                    // Append the new option to the select element
+                    ssidSelection.add(option);
+                });
             })
             .catch(error => {
                 console.error('There was a problem with the fetch operation:', error);
             });
+
 
     }
 
