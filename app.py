@@ -10,6 +10,8 @@ from googleapiclient.http import MediaFileUpload
 import wifi
 import io
 import os
+from drive_uploader import upload_picture
+from drive_folder import create_folder_in_drive
 
 app = Flask(__name__)
 
@@ -18,10 +20,13 @@ picam2 = Picamera2()
 preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
-creds = service_account.Credentials.from_service_account_file('martngoogledrev8.json')
+folder_id = None
+filename
 
-# Build the Google Drive API service
-drive_service = build('drive', 'v3', credentials=creds)
+
+filename =  "IMG_1935.JPEG"
+
+upload_picture(filename, folder_id)
 
 
 def create_picture_folder():
@@ -48,21 +53,30 @@ def initiate():
 
 @app.route("/capture", methods=['GET'])
 def capture():
+    global folder_id
+    global filename
+    folder_id = create_folder_in_drive()
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         picam2.capture_file(filename)
-        
-        # Upload the image to Google Drive
-        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['13dQff2uQ65XAKVc9CRZcNXnkUZwzTgzX']}
-        media_body = MediaFileUpload(filename, mimetype='image/jpeg')  # Specify the mimetype
-        drive_file = drive_service.files().create(body=file_metadata, media_body=media_body).execute()
-
+        upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-    
+
+@app.route("/capture_next", methods=['GET'])
+def capture_next():
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    try:
+        # Capture the image
+        filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        picam2.capture_file(filename)
+        upload_picture(filename, folder_id)
+        return jsonify({"success": True, "message": "Photo captured and uploaded successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500 
      
 @app.route("/settings", methods=['GET', 'POST'])
 def settings():
