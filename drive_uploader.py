@@ -46,10 +46,11 @@ class GoogleDriveUploader:
             supportsAllDrives=True
         ).execute()
         print('File uploaded. File ID:', file.get('id'))
+        return(file.get('id'))
 
 # This function now requires a folder_id parameter to specify where the file should be uploaded.
 def upload_picture(file_name, folder_id):
     """Function to upload a picture to a specified folder in Google Drive."""
     uploader = GoogleDriveUploader()
     file_path = os.path.join(os.getcwd(), file_name)  # Assumes file is in the current working directory
-    uploader.upload_file(file_path, folder_id)
+    return uploader.upload_file(file_path, folder_id)
