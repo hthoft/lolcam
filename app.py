@@ -24,9 +24,6 @@ folder_id = None
 filename = None
 
 
-filename =  "IMG_1935.JPEG"
-
-upload_picture(filename, folder_id)
 
 
 def create_picture_folder():
