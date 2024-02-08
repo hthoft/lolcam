@@ -12,6 +12,7 @@ import io
 import os
 from drive_uploader import upload_picture
 from drive_folder import create_folder_in_drive
+import rpi.GPIO
 
 app = Flask(__name__)
 
