@@ -401,36 +401,6 @@
         }, 700);
     }
 
-    function flashAndCapture() {
-    // Trigger flash effect
-    const flashDiv = document.getElementById('flash');
-    flashDiv.style.opacity = '1'; // Make the flash div fully opaque
-    // Immediately begin to fade out the flash without waiting for it to complete
-    setTimeout(() => {
-        flashDiv.style.opacity = '0'; // Fade out the flash div
-    }, 1000); // Adjust this timing as needed for the desired flash duration
-
-    // Concurrently, call Flask to capture an image without waiting for the flash effect
-    fetch('/capture')
-        .then(response => response.json()) // Parse the response as JSON
-        .then(data => {
-            if (data.success) {
-                // Log the URL to the console
-                console.log('Photo captured and uploaded successfully. URL:', data.url);
-            } else {
-                // Handle cases where success is false
-                console.error('Capture failed:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error capturing photo:', error);
-        })
-        .finally(() => {
-            // Reset the UI to its initial state after capturing the photo or in case of an error
-            setTimeout(reset, 2000);
-        });
-}
-
 function flashAndCapture() {
     // Trigger flash effect immediately
     const flashDiv = document.getElementById('flash');
