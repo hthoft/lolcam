@@ -18,6 +18,7 @@ app = Flask(__name__)
 
 # Initialize the Pi Camera
 picam2 = Picamera2()
+
 preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
@@ -25,6 +26,11 @@ folder_id = None
 filename = None
 url = "https://drive.google.com/drive/folders/"
 
+
+picam3 = Picamera2()
+dinfar_config = picam3.create_preview_configuration(main={"size": (1920, 1080)})
+picam3.configure(dinfar_config)
+picam3.start()
 
 
 def create_picture_folder():
@@ -57,7 +63,7 @@ def capture():
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        picam2.capture_file(filename)
+        picam3.capture_file(filename)
         folder_id = create_folder_in_drive()
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
@@ -70,7 +76,7 @@ def capture_next():
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        picam2.capture_file(filename)
+        picam3.capture_file(filename)
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
     except Exception as e:
