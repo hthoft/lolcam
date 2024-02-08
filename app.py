@@ -19,7 +19,7 @@ app = Flask(__name__)
 # Initialize the Pi Camera
 picam2 = Picamera2()
 
-preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
+preview_config = picam2.create_preview_configuration(main={"size": (1920, 1080)})
 capture_config = {"main": {"size": (1920, 1080)}}  # 1080p capture configuration
 picam2.configure(preview_config)
 picam2.start()
@@ -59,7 +59,7 @@ def capture():
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        picam2.capture_file(filename, config=capture_config)  # Specify capture configuration here if needed
+        picam2.capture_file(filename)  # Specify capture configuration here if needed
         folder_id = create_folder_in_drive()
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
@@ -72,7 +72,7 @@ def capture_next():
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        picam2.capture_file(filename, config=capture_config)  # Specify capture configuration here if needed
+        picam2.capture_file(filename)  # Specify capture configuration here if needed
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
     except Exception as e:
