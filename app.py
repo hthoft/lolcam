@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, jsonify, Response
-from picamera2 import Picamera2
+from picamera2 import Picamera2, Preview
 from datetime import datetime
 import time
 import cv2
@@ -27,12 +27,6 @@ filename = None
 url = "https://drive.google.com/drive/folders/"
 
 
-picam3 = Picamera2()
-dinfar_config = picam3.create_preview_configuration(main={"size": (1920, 1080)})
-picam3.configure(dinfar_config)
-picam3.start()
-
-
 def create_picture_folder():
     # Define the path for the folder
     pictures_dir = "/home/lol/Pictures"
@@ -55,6 +49,8 @@ def initiate():
     time.sleep(5)  # Use time.sleep for delays
     return jsonify({'hide': True})
 
+capture_config = {"main": {"size": (1920, 1080)}}  # 1080p capture configuration
+
 @app.route("/capture", methods=['GET'])
 def capture():
     global folder_id
@@ -63,7 +59,9 @@ def capture():
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        picam3.capture_file(filename)
+        picam2.configure(capture_config)
+        picam2.start()
+        picam2.capture_file(filename)
         folder_id = create_folder_in_drive()
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
@@ -76,7 +74,9 @@ def capture_next():
     try:
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        picam3.capture_file(filename)
+        picam2.configure(capture_config)
+        picam2.start()
+        picam2.capture_file(filename)
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
     except Exception as e:
