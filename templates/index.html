@@ -155,7 +155,7 @@
     </div>
     <div class="modal fade" id="consentModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen modal-dialog-centered">
-          <div class="modal-content bg-dark">
+          <div class="modal-content bg-black">
             <div class="modal-header">
               <h5 class="modal-title text-light" id="consentModalLabel">Betingelser</h5>
             </div>
@@ -181,8 +181,8 @@
                 
             </div>
             <div class="modal-footer">
-                <button type="button" id="declineButton" class="btn btn-dark rounded-0 border-light fw-bolder fs-4" style="width: 48%!important; height: 80px;" data-bs-dismiss="modal" onclick="reset()">Afvis</button>
-                <button type="button" class="btn btn-dark border-light fw-bolder fs-4 rounded-0" style="width: 48%!important; height: 80px;"  data-bs-dismiss="modal" onclick="startCountdown()">Acceptér</button>
+                <button type="button" id="declineButton" class="btn btn-black rounded-0 border-light fw-bolder fs-4" style="width: 48%!important; height: 80px;" data-bs-dismiss="modal" onclick="reset()">Afvis</button>
+                <button type="button" class="btn btn-success border-light fw-bolder fs-4 rounded-0" style="width: 48%!important; height: 80px;"  data-bs-dismiss="modal" onclick="startCountdown()">Acceptér</button>
             </div>
           </div>
         </div>
@@ -238,8 +238,8 @@
                     Vil du tage et billede mere?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" id="declineButton" class="btn btn-dark rounded-0 border-light fw-bolder fs-4" style="width: 48%!important; height: 80px;" data-bs-dismiss="modal" onclick="reset()">Nej tak</button>
-                    <button type="button" class="btn btn-dark border-light fw-bolder fs-4 rounded-0" style="width: 48%!important; height: 80px;"  data-bs-dismiss="modal" onclick="captureNext()">Tag ét mere</button>
+                    <button type="button" id="declineButton2" class="btn btn-black rounded-0 border-light fw-bolder fs-4" style="width: 48%!important; height: 80px;" data-bs-dismiss="modal" onclick="reset()">Nej tak</button>
+                    <button type="button" class="btn btn-success border-light fw-bolder fs-4 rounded-0" style="width: 48%!important; height: 80px;"  data-bs-dismiss="modal" onclick="captureNext()">Tag ét mere</button>
                 </div>
             </div>
         </div>
@@ -447,6 +447,20 @@ function flashAndCapture() {
         // Show the post-capture modal to ask if the user wants to take another picture
         let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
         postCaptureModal.show();
+
+        let countdown = 30; // 30 seconds countdown
+        document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+
+        countdownInterval = setInterval(() => {
+            countdown--;
+            document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                consentModal.hide(); // Hide the modal
+                reset(); // Call the reset function
+            }
+        }, 1000);
+
         });
 
     }, 500);
