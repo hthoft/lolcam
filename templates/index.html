@@ -454,8 +454,12 @@ function flashAndCapture() {
 }
 
 function captureNext() {
-    // Close the postCaptureModal if needed
-    $('#postCaptureModal').modal('hide');
+    // Close the postCaptureModal if needed, for Bootstrap 5
+    var postCaptureModalElement = document.getElementById('postCaptureModal');
+    var modal = bootstrap.Modal.getInstance(postCaptureModalElement);
+    if (modal) {
+        modal.hide();
+    }
 
     // Similar to startCountdown, but fetches capture_next
     let countdownValue = 3;
@@ -478,6 +482,7 @@ function captureNext() {
         countdownValue--;
     }, 1000);
 }
+
 
 function flashAndCaptureNext() {
     // Similar to flashAndCapture, but fetches capture_next
