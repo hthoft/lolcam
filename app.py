@@ -1,9 +1,15 @@
 from flask import Flask, request, render_template, jsonify, Response
 from picamera2 import Picamera2
+from datetime import datetime
 import time
 import cv2
 import numpy as np
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from googleapiclient.http import MediaFileUpload
 import wifi
+import io
+import os
 
 app = Flask(__name__)
 
@@ -12,6 +18,23 @@ picam2 = Picamera2()
 preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
+creds = service_account.Credentials.from_service_account_file('martngoogledrev8.json')
+
+# Build the Google Drive API service
+drive_service = build('drive', 'v3', credentials=creds)
+
+
+def create_picture_folder():
+    # Define the path for the folder
+    pictures_dir = "/home/lol/Pictures"
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    folder_path = os.path.join(pictures_dir, current_date)
+    
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Created folder: {folder_path}")
+
 
 @app.route('/')
 def home():
@@ -23,7 +46,24 @@ def initiate():
     time.sleep(5)  # Use time.sleep for delays
     return jsonify({'hide': True})
 
+@app.route("/capture", methods=['GET'])
+def capture():
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    try:
+        # Capture the image
+        filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        picam2.capture_file(filename)
+        
+        # Upload the image to Google Drive
+        file_metadata = {'name': f"{current_datetime}.jpg", 'parents': ['13dQff2uQ65XAKVc9CRZcNXnkUZwzTgzX']}
+        media_body = MediaFileUpload(filename, mimetype='image/jpeg')  # Specify the mimetype
+        drive_file = drive_service.files().create(body=file_metadata, media_body=media_body).execute()
 
+        return jsonify({"success": True, "message": "Photo captured and uploaded successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    
+     
 @app.route("/settings", methods=['GET', 'POST'])
 def settings():
     if request.method == 'GET':
@@ -31,11 +71,9 @@ def settings():
         networks = [(cell.signal, cell.ssid) for cell in scanner]
         return jsonify(networks)
     elif request.method == 'POST':
-        data = request.get_json()  # Get the JSON data
-        selected_ssid = data['ssidSelection']
-        password = data['wifiPassword']
+        selected_ssid = request.form['ssidSelection']
+        password = request.form['wifiPassword']
         try:
-            scanner = wifi.Cell.all('wlan0')
             for cell in scanner:
                 if cell.ssid == selected_ssid:
                     scheme = wifi.Scheme.for_cell('wlan0', cell.ssid, cell, password)
@@ -63,8 +101,11 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
+
+
 if __name__ == '__main__':
     try:
+        create_picture_folder()
         app.run(host='0.0.0.0', port=50005, debug=True, use_reloader=False)
     finally:
         picam2.stop()  # Ensure the camera is stopped
