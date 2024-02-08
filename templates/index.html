@@ -226,8 +226,24 @@
                 </div>
             </div>
         </div>
-    </div>
     
+    </div>
+    <div class="modal fade" id="postCaptureModal" tabindex="-1" aria-labelledby="postCaptureModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="postCaptureModalLabel">Photo Captured</h5>
+                </div>
+                <div class="modal-body">
+                    Do you want to take another picture?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary" onclick="captureNext()">Yes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
@@ -428,13 +444,69 @@ function flashAndCapture() {
             console.error('Error capturing photo:', error);
         })
         .finally(() => {
-            // Reset the UI to its initial state after capturing the photo or in case of an error
-            setTimeout(reset, 2000);
+        // Show the post-capture modal to ask if the user wants to take another picture
+        let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
+        postCaptureModal.show();
         });
+
     }, 500);
 
 }
 
+function captureNext() {
+    // Close the postCaptureModal if needed
+    $('#postCaptureModal').modal('hide');
+
+    // Similar to startCountdown, but fetches capture_next
+    let countdownValue = 3;
+    const myDiv = document.getElementById('myDiv');
+    myDiv.innerHTML = ''; // Clear any previous content
+    myDiv.style.opacity = '1';
+    
+    // Start the countdown for the next capture
+    const countdownInterval = setInterval(() => {
+        if (countdownValue > 0) {
+            myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>';
+        } else {
+            clearInterval(countdownInterval);
+            myDiv.innerHTML = '';
+            myDiv.style.opacity = '0';
+
+            // Trigger flash effect and fetch capture_next instead of /capture
+            flashAndCaptureNext();
+        }
+        countdownValue--;
+    }, 1000);
+}
+
+function flashAndCaptureNext() {
+    // Similar to flashAndCapture, but fetches capture_next
+    const flashDiv = document.getElementById('flash');
+    flashDiv.style.opacity = '1';
+
+    setTimeout(() => {
+        flashDiv.style.opacity = '0';
+    }, 1000);
+
+    setTimeout(() => {
+        fetch('/capture_next')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Next photo captured and uploaded successfully. URL:', data.url);
+            } else {
+                console.error('Capture next failed:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error capturing next photo:', error);
+        })
+        .finally(() => {
+            let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
+            postCaptureModal.show();
+        });
+    }, 500);
+}
 
 
 
