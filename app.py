@@ -21,7 +21,7 @@ preview_config = picam2.create_preview_configuration(main={"size": (1280, 800)})
 picam2.configure(preview_config)
 picam2.start()
 folder_id = None
-filename
+filename = None
 
 
 filename =  "IMG_1935.JPEG"
