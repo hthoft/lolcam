@@ -523,6 +523,27 @@ function flashAndCaptureNext() {
         .finally(() => {
             let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
             postCaptureModal.show();
+
+            // Similar to startCountdown, but fetches capture_next
+            let countdownValue = 3;
+            const myDiv = document.getElementById('myDiv');
+            myDiv.innerHTML = ''; // Clear any previous content
+            myDiv.style.opacity = '1';
+            
+            // Start the countdown for the next capture
+            const countdownInterval = setInterval(() => {
+                if (countdownValue > 0) {
+                    myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>';
+                } else {
+                    clearInterval(countdownInterval);
+                    myDiv.innerHTML = '';
+                    myDiv.style.opacity = '0';
+
+                    // Trigger flash effect and fetch capture_next instead of /capture
+                    flashAndCaptureNext();
+                }
+                countdownValue--;
+            }, 1000);
         });
     }, 500);
 }
