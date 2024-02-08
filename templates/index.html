@@ -456,7 +456,7 @@ function flashAndCapture() {
             document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
             if (countdown <= 0) {
                 clearInterval(countdownInterval);
-                consentModal.hide(); // Hide the modal
+                postCaptureModal.hide(); // Hide the modal
                 reset(); // Call the reset function
             }
         }, 1000);
