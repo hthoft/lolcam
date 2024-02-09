@@ -249,6 +249,7 @@
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
+    let countdownInterval;
     document.getElementById('wifiSettingsForm').addEventListener('submit', function(event) {
         event.preventDefault();  // Prevent the default form submission
 
@@ -420,183 +421,103 @@
 
 
 
-function flashAndCapture() {
-    // Trigger flash effect immediately
-    const flashDiv = document.getElementById('flash');
-    flashDiv.style.opacity = '1'; // Make the flash div fully opaque
+    let isFirstCapture = true; // Flag to track if it's the first capture
 
-    // Begin to fade out the flash after a short duration
+function flashAndCapture() {
+    const flashDiv = document.getElementById('flash');
+    flashDiv.style.opacity = '1'; // Make flash div fully opaque
+
     setTimeout(() => {
         flashDiv.style.opacity = '0'; // Fade out the flash div
-    }, 1000); // This delay is for the fade-out effect, not the start of the flash
+    }, 1000); // Delay for the fade-out effect
 
-    // Concurrently, call Flask to capture an image without waiting for the flash effect
+    // Determine the correct endpoint based on whether it's the first capture
+    const endpoint = isFirstCapture ? '/capture' : '/capture_next';
+
     setTimeout(() => {
-        fetch('/capture')
-        .then(response => response.json()) // Parse the response as JSON
-        .then(data => {
-            if (data.success) {
-                // Log the URL to the console
-                console.log('Photo captured and uploaded successfully. URL:', data.url);
-                var qrCode = new QRCode(document.getElementById("qrCode"), {
-                    text: data.url,
-                    width: 512,
-                    height: 512,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-            } else {
-                // Handle cases where success is false
-                console.error('Capture failed:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error capturing photo:', error);
-        })
-        .finally(() => {
-        // Show the post-capture modal to ask if the user wants to take another picture
-        let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
-        postCaptureModal.show();
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Photo captured and uploaded successfully. URL:', data.url);
+                    showQRCode(data.url); // Generate and show QR code in the modal
+                    showPostCaptureModal(); // Show the modal after capture
+                } else {
+                    console.error('Capture failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error capturing photo:', error);
+            });
 
-        let countdown = 30; // 30 seconds countdown
-        document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
-
-        countdownInterval = setInterval(() => {
-            countdown--;
-            document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                postCaptureModal.hide(); // Hide the modal
-                reset(); // Call the reset function
-            }
-        }, 1000);
-
-        });
-
+        isFirstCapture = false; // After the first capture, switch flag off
     }, 500);
+}
 
+function showQRCode(url) {
+    var qrCodeElement = document.getElementById("qrCode");
+    qrCodeElement.innerHTML = ''; // Clear previous QR code
+    new QRCode(qrCodeElement, {
+        text: url,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+}
+
+function showPostCaptureModal() {
+    let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
+    postCaptureModal.show();
+
+    let countdown = 30; // 30 seconds countdown
+    document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+
+    let countdownInterval = setInterval(() => {
+        countdown--;
+        document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            postCaptureModal.hide(); // Hide the modal
+            reset(); // Reset for a new initial capture
+        }
+    }, 1000);
 }
 
 
 
+function reset() {
+    clearInterval(countdownInterval); // Clear the countdown interval if it's running
+    const myDiv = document.getElementById('myDiv');
+    const spinner = document.getElementById('spinner');
+    const flashDiv = document.getElementById('flash');
+    
+    document.querySelector('.camera-background').setAttribute('onclick', 'callFlaskRouteAndToggleDiv()');
 
+    // Reset the content and style of myDiv to its original state
+    myDiv.innerHTML = '<h1 style="font-size: 75px;">TRYK HER</h1>' +
+                      '<div class="green-box-right rounded-2">' +
+                      '<h4>FOR SELFIE</h4></div>' +
+                      '<div class="green-box-left rounded-2">' +
+                      '<h4 class="fw-light">LYD & LYS</h4></div>';
 
+    myDiv.style.backgroundColor = 'black'; // Restore the black background
+    myDiv.style.animation = 'pulse 1s infinite alternate'; // Re-enable the pulse animation
 
+    myDiv.style.opacity = '1';
+    spinner.style.opacity = '0';
+    flashDiv.style.opacity = '0';
 
+    myDiv.classList.remove('hidden'); // Remove the 'hidden' class if it was added
 
+    isFirstCapture = true; // Reset to true for a new initial capture
+    document.getElementById("qrCode").innerHTML = ''; // Clear the QR code
 
-function captureNext() {
-    // Close the postCaptureModal if needed, for Bootstrap 5
     var postCaptureModalElement = document.getElementById('postCaptureModal');
     var modal = bootstrap.Modal.getInstance(postCaptureModalElement);
-    if (modal) {
-        modal.hide();
-    }
-
-    // Similar to startCountdown, but fetches capture_next
-    let countdownValue = 3;
-    const myDiv = document.getElementById('myDiv');
-    myDiv.innerHTML = ''; // Clear any previous content
-    myDiv.style.opacity = '1';
-    
-    // Start the countdown for the next capture
-    const countdownInterval = setInterval(() => {
-        if (countdownValue > 0) {
-            myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>';
-        } else {
-            clearInterval(countdownInterval);
-            myDiv.innerHTML = '';
-            myDiv.style.opacity = '0';
-
-            // Trigger flash effect and fetch capture_next instead of /capture
-            flashAndCaptureNext();
-        }
-        countdownValue--;
-    }, 1000);
+    modal.hide(); // Hide the modal if it's still showing
 }
-
-
-function flashAndCaptureNext() {
-    // Similar to flashAndCapture, but fetches capture_next
-    const flashDiv = document.getElementById('flash');
-    flashDiv.style.opacity = '1';
-
-    setTimeout(() => {
-        flashDiv.style.opacity = '0';
-    }, 1000);
-
-    setTimeout(() => {
-        fetch('/capture_next')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Next photo captured and uploaded successfully. URL:', data.url);
-            } else {
-                console.error('Capture next failed:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error capturing next photo:', error);
-        })
-        .finally(() => {
-            let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
-            postCaptureModal.show();
-
-            // Similar to startCountdown, but fetches capture_next
-            let countdownValue = 3;
-            const myDiv = document.getElementById('myDiv');
-            myDiv.innerHTML = ''; // Clear any previous content
-            myDiv.style.opacity = '1';
-            
-            // Start the countdown for the next capture
-            const countdownInterval = setInterval(() => {
-                if (countdownValue > 0) {
-                    myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>';
-                } else {
-                    clearInterval(countdownInterval);
-                    myDiv.innerHTML = '';
-                    myDiv.style.opacity = '0';
-
-                    // Trigger flash effect and fetch capture_next instead of /capture
-                    flashAndCaptureNext();
-                }
-                countdownValue--;
-            }, 1000);
-        });
-    }, 500);
-}
-
-
-
-    function reset() {
-        clearInterval(countdownInterval);
-        const myDiv = document.getElementById('myDiv');
-        const spinner = document.getElementById('spinner');
-        const flashDiv = document.getElementById('flash');
-
-        document.querySelector('.camera-background').setAttribute('onclick', 'callFlaskRouteAndToggleDiv()');
-
-
-        // Reset the content and style of myDiv to its original state
-        myDiv.innerHTML = '<h1 style="font-size: 75px;">TRYK HER</h1>' +
-                        '<div class="green-box-right rounded-2">' +
-                        '<h4>FOR SELFIE</h4></div>' +
-                        '<div class="green-box-left rounded-2">' +
-                        '<h4 class="fw-light">LYD & LYS</h4></div>';
-
-        myDiv.style.backgroundColor = 'black'; // Restore the black background
-        myDiv.style.animation = 'pulse 1s infinite alternate'; // Re-enable the pulse animation
-
-        // Adjust visibility as needed
-        myDiv.style.opacity = '1';
-        spinner.style.opacity = '0';
-        flashDiv.style.opacity = '0';
-
-        // Remove the 'hidden' class if it was added
-        myDiv.classList.remove('hidden');
-    }
-
 
 
 
