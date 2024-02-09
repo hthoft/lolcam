@@ -418,22 +418,26 @@
         }, 700);
     }
 
+
+
 function flashAndCapture() {
+    // Trigger flash effect immediately
     const flashDiv = document.getElementById('flash');
     flashDiv.style.opacity = '1'; // Make the flash div fully opaque
 
+    // Begin to fade out the flash after a short duration
     setTimeout(() => {
         flashDiv.style.opacity = '0'; // Fade out the flash div
     }, 1000); // This delay is for the fade-out effect, not the start of the flash
 
+    // Concurrently, call Flask to capture an image without waiting for the flash effect
     setTimeout(() => {
         fetch('/capture')
-        .then(response => response.json())
+        .then(response => response.json()) // Parse the response as JSON
         .then(data => {
             if (data.success) {
+                // Log the URL to the console
                 console.log('Photo captured and uploaded successfully. URL:', data.url);
-
-                // Generate QR code for the captured image URL
                 var qrCode = new QRCode(document.getElementById("qrCode"), {
                     text: data.url,
                     width: 128,
@@ -442,11 +446,8 @@ function flashAndCapture() {
                     colorLight : "#ffffff",
                     correctLevel : QRCode.CorrectLevel.H
                 });
-
-                // Show the post-capture modal
-                let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
-                postCaptureModal.show();
             } else {
+                // Handle cases where success is false
                 console.error('Capture failed:', data.message);
             }
         })
@@ -454,10 +455,36 @@ function flashAndCapture() {
             console.error('Error capturing photo:', error);
         })
         .finally(() => {
-            // Additional logic for countdown or resetting, if necessary
+        // Show the post-capture modal to ask if the user wants to take another picture
+        let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
+        postCaptureModal.show();
+
+        let countdown = 30; // 30 seconds countdown
+        document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+
+        countdownInterval = setInterval(() => {
+            countdown--;
+            document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                postCaptureModal.hide(); // Hide the modal
+                reset(); // Call the reset function
+            }
+        }, 1000);
+
         });
+
     }, 500);
+
 }
+
+
+
+
+
+
+
+
 
 function captureNext() {
     // Close the postCaptureModal if needed, for Bootstrap 5
