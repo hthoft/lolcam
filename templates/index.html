@@ -232,10 +232,10 @@
         <div class="modal-dialog modal-fullscreen modal-dialog-centered">
             <div class="modal-content bg-black">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="postCaptureModalLabel">Billede taget!</h5>
+                    <h3 class="modal-title" id="postCaptureModalLabel">Billede taget!</h3>
                 </div>
                 <div class="modal-body">
-                    Vil du tage et billede mere?
+                    <h4>Vil du tage et billede mere?</h4>
                 </div>
                 <div id="qrCode" class="d-flex justify-content-center align-items-center" style="margin-top: 20px;"></div>
                 <div class="modal-footer">
@@ -459,8 +459,8 @@ function showQRCode(url) {
     qrCodeElement.innerHTML = ''; // Clear previous QR code
     new QRCode(qrCodeElement, {
         text: url,
-        width: 256,
-        height: 256,
+        width: 512,
+        height: 512,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
