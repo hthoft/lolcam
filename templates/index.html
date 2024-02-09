@@ -55,8 +55,13 @@
             border-right-color: transparent;
 }
         }
-
-        
+        .modal-body h4 {
+            overflow: hidden; /* Hide overflow */
+            white-space: nowrap; /* Prevent text from wrapping */
+            text-overflow: ellipsis; /* Add an ellipsis for overflow text */
+            max-width: 100%; /* Ensure the element does not exceed its container */
+        }
+                
 
         .green-box-right {
             position: absolute;
@@ -234,10 +239,10 @@
                 <div class="modal-header">
                     <h3 class="modal-title" id="postCaptureModalLabel">Billede taget!</h3>
                 </div>
-                <div class="modal-body" >
+                <div class="modal-body" style="overflow: hidden;">
                     <h4>Dine billeder er samlet her:</h4>
                 </div>
-                <div style="display: flex; justify-content: center; align-items: center; height: 90%;" >
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%;" >
                     <div id="qrCode" class="d-flex justify-content-center align-items-center"></div>
                 </div>
                 
