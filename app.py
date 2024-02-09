@@ -65,6 +65,7 @@ def capture():
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
             ser.write(b'1')  # Send a byte
+            time.sleep(0.5);
         except:
             pass
         picam2.capture_file(filename)  # Specify capture configuration here if needed
@@ -82,6 +83,7 @@ def capture_next():
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
             ser.write(b'1')  # Send a byte
+            time.sleep(0.5);
         except:
             pass
         picam2.capture_file(filename)  # Specify capture configuration here if needed
