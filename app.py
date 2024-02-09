@@ -12,6 +12,7 @@ import io
 import os
 from drive_uploader import upload_picture
 from drive_folder import create_folder_in_drive
+import serial
 #import rpi.GPIO
 
 app = Flask(__name__)
@@ -27,6 +28,9 @@ folder_id = None
 filename = None
 url = "https://drive.google.com/drive/folders/"
 
+
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+time.sleep(2)
 
 def create_picture_folder():
     # Define the path for the folder
@@ -101,6 +105,14 @@ def settings():
 @app.route('/video')
 def video():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/send_pulse')
+def send_pulse():
+    try:
+        ser.write(b'1')  # Send a byte
+        return "Pulse sent!"
+    except:
+        return "Failed to send pulse"
 
 def generate_frames():
     while True:

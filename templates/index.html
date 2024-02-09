@@ -499,6 +499,13 @@ function captureNext() {
 
 
 function flashAndCaptureNext() {
+    fetch(`/send_pulse`, { method: 'GET' })
+            .then(response => console.log(response.text()))
+            .then(data => alert(data))
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Failed to send pulse');
+            });
     // Similar to flashAndCapture, but fetches capture_next
     const flashDiv = document.getElementById('flash');
     flashDiv.style.opacity = '1';
