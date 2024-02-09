@@ -471,19 +471,26 @@ function showPostCaptureModal() {
     let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
     postCaptureModal.show();
 
+    // Clear any existing countdown before starting a new one
+    if (countdownInterval !== null) {
+        clearInterval(countdownInterval);
+    }
+
     let countdown = 30; // 30 seconds countdown
     document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
 
-    let countdownInterval = setInterval(() => {
+    countdownInterval = setInterval(() => {
         countdown--;
         document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
         if (countdown <= 0) {
             clearInterval(countdownInterval);
+            countdownInterval = null; // Reset the interval reference
             postCaptureModal.hide(); // Hide the modal
-            reset(); // Reset for a new initial capture
+            reset(); // Call the reset function
         }
     }, 1000);
 }
+
 
 
 
