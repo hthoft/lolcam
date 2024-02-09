@@ -65,9 +65,8 @@ def capture():
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
             ser.write(b'1')  # Send a byte
-            return "Pulse sent!"
         except:
-            return "Failed to send pulse"
+            pass
         picam2.capture_file(filename)  # Specify capture configuration here if needed
         folder_id = create_folder_in_drive()
         upload_picture(filename, folder_id)
@@ -83,9 +82,8 @@ def capture_next():
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
             ser.write(b'1')  # Send a byte
-            return "Pulse sent!"
         except:
-            return "Failed to send pulse"
+            pass
         picam2.capture_file(filename)  # Specify capture configuration here if needed
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
