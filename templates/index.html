@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
-
+    <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
     <style>
         .camera-background {
             position: absolute;
@@ -237,6 +237,7 @@
                 <div class="modal-body">
                     Vil du tage et billede mere?
                 </div>
+                <div id="qrCode"></div>
                 <div class="modal-footer">
                     <button type="button" id="declineButton2" class="btn btn-black rounded-0 border-light fw-bolder fs-4" style="width: 48%!important; height: 80px;" data-bs-dismiss="modal" onclick="reset()">Nej tak</button>
                     <button type="button" class="btn btn-success border-light fw-bolder fs-4 rounded-0" style="width: 48%!important; height: 80px;"  data-bs-dismiss="modal" onclick="captureNext()">Tag ét mere</button>
@@ -418,25 +419,34 @@
     }
 
 function flashAndCapture() {
-    // Trigger flash effect immediately
     const flashDiv = document.getElementById('flash');
     flashDiv.style.opacity = '1'; // Make the flash div fully opaque
 
-    // Begin to fade out the flash after a short duration
     setTimeout(() => {
         flashDiv.style.opacity = '0'; // Fade out the flash div
     }, 1000); // This delay is for the fade-out effect, not the start of the flash
 
-    // Concurrently, call Flask to capture an image without waiting for the flash effect
     setTimeout(() => {
         fetch('/capture')
-        .then(response => response.json()) // Parse the response as JSON
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Log the URL to the console
                 console.log('Photo captured and uploaded successfully. URL:', data.url);
+
+                // Generate QR code for the captured image URL
+                var qrCode = new QRCode(document.getElementById("qrCode"), {
+                    text: data.url,
+                    width: 128,
+                    height: 128,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+
+                // Show the post-capture modal
+                let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
+                postCaptureModal.show();
             } else {
-                // Handle cases where success is false
                 console.error('Capture failed:', data.message);
             }
         })
@@ -444,27 +454,9 @@ function flashAndCapture() {
             console.error('Error capturing photo:', error);
         })
         .finally(() => {
-        // Show the post-capture modal to ask if the user wants to take another picture
-        let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
-        postCaptureModal.show();
-
-        let countdown = 30; // 30 seconds countdown
-        document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
-
-        countdownInterval = setInterval(() => {
-            countdown--;
-            document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                postCaptureModal.hide(); // Hide the modal
-                reset(); // Call the reset function
-            }
-        }, 1000);
-
+            // Additional logic for countdown or resetting, if necessary
         });
-
     }, 500);
-
 }
 
 function captureNext() {
