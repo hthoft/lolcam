@@ -10,6 +10,7 @@ from googleapiclient.http import MediaFileUpload
 import wifi
 import io
 import os
+from PIL import Image
 from drive_uploader import upload_picture
 from drive_folder import create_folder_in_drive
 import serial
@@ -64,11 +65,17 @@ def capture():
         # Capture the image
         filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
-            ser.write(b'1')  # Send a byte
-            time.sleep(0.5);
+            ser.write(b'1')
+            time.sleep(0.5)
         except:
             pass
-        picam2.capture_file(filename)  # Specify capture configuration here if needed
+        picam2.capture_file(filename)
+
+        base_image = Image.open(filename)
+        overlay_image = Image.open('overlay.png')
+        base_image.paste(overlay_image, (0, 0), overlay_image)
+        base_image.save(filename)
+
         folder_id = create_folder_in_drive()
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
