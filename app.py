@@ -72,7 +72,7 @@ def capture():
         picam2.capture_file(filename)
 
         base_image = Image.open(filename)
-        overlay_image = Image.open('overlay.png')
+        overlay_image = Image.open('overlay2.png')
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
 
