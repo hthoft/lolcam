@@ -72,7 +72,7 @@ def capture():
         picam2.capture_file(filename)
 
         base_image = Image.open(filename)
-        overlay_image = Image.open('overlay.png')
+        overlay_image = Image.open('overlay2.png')
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
 
@@ -94,6 +94,10 @@ def capture_next():
         except:
             pass
         picam2.capture_file(filename)  # Specify capture configuration here if needed
+        base_image = Image.open(filename)
+        overlay_image = Image.open('overlay.png')
+        base_image.paste(overlay_image, (0, 0), overlay_image)
+        base_image.save(filename)
         upload_picture(filename, folder_id)
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
     except Exception as e:
