@@ -108,8 +108,8 @@ def capture_next():
 def settings():
     if request.method == 'POST':
         selected_ssid = "AAU-1-DAY"
-        password1 = request.form['wifiPassword']
-        password2 = request.form['wifiPassword2']
+        # password1 = request.form['wifiPassword']
+        # password2 = request.form['wifiPassword2']
         # current_date = datetime.now().strftime("%Y-%m-%d")
         
         # data = {

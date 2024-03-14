@@ -335,7 +335,7 @@
             wifiPassword: formData.get('wifiPassword'),
             wifiPassword2: formData.get('wifiPassword2'),
         };
-
+        console.log("data", data);
         fetch('/settings', {
             method: 'POST',
             headers: {
