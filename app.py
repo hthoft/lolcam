@@ -108,14 +108,14 @@ def capture_next():
 def settings():
     if request.method == 'POST':
         selected_ssid = "AAU-1-DAY"
-        # password1 = request.form['wifiPassword']
-        # password2 = request.form['wifiPassword2']
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        password1 = request.form['wifiPassword']
+        password2 = request.form['wifiPassword2']
+        # current_date = datetime.now().strftime("%Y-%m-%d")
         
-        data = {
-            current_date: {"ssid": selected_ssid, "password": password1},
-            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": password2}
-        }
+        # data = {
+        #     current_date: {"ssid": selected_ssid, "password": password1},
+        #     (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": password2}
+        # }
 
         # with open("network.json", "w") as json_file:
         #     json.dump(data, json_file, indent=4)
