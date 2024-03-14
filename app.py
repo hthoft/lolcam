@@ -115,12 +115,12 @@ def settings():
 
         # Constructing the data dictionary
         data = {
-            'current_date': {"ssid": selected_ssid, "password": wifi_password1},  # Corrected variable name
+            (datetime.now()).strftime("%Y-%m-%d"): {"ssid": selected_ssid, "password": wifi_password1},  # Corrected variable name
             (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": wifi_password2}
         }
 
         # Writing the data to a JSON file
-        with open("network.json", "w") as json_file:
+        with open("lolcam/network.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
         response_data = {'success': True, 'message': 'Changes saved successfully'}
