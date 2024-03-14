@@ -10,7 +10,7 @@ from googleapiclient.discovery import build
 class GoogleDriveFolderCreator:
     SCOPES = ['https://www.googleapis.com/auth/drive']
     TOKEN_PATH = 'token.json'
-    FOLDER_ID = '1hCdGPyGdorhsBcPhg7lmtGiFFZXJMB1O'  # Update this with your specific folder ID
+    FOLDER_ID = '1gjCwKvtVIQSbxZs7o79vgGkoNtUKSyGM'  # Update this with your specific folder ID
 
     def __init__(self):
         self.creds = self._authenticate()
