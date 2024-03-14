@@ -1,4 +1,4 @@
 {
-    "2023-03-14": "password",
-    "2023-03-15": "password2"
+    "2023-03-14": {"ssid": "NetworkName1", "password": "password1"},
+    "2023-03-15": {"ssid": "NetworkName1", "password": "password2"}
 }
