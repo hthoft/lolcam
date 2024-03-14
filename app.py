@@ -104,22 +104,29 @@ def capture_next():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500 
      
-@app.route("/settings", methods=['POST'])
-def settings():
-    if request.method == 'POST':
-        selected_ssid = "AAU-1-DAY"
-        # password1 = request.form['wifiPassword']
-        # password2 = request.form['wifiPassword2']
-        # current_date = datetime.now().strftime("%Y-%m-%d")
-        
-        # data = {
-        #     current_date: {"ssid": selected_ssid, "password": password1},
-        #     (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": password2}
-        # }
 
-        # with open("network.json", "w") as json_file:
-        #     json.dump(data, json_file, indent=4)
-        return jsonify({"success": True, "message": "WiFi settings updated successfully."}), 200
+@app.route('/settings', methods=['POST'])
+def settings():
+    try:
+        data = request.get_json()
+        selected_ssid = "AAU-1-DAY"
+        wifi_password = data.get('wifiPassword')
+        wifi_password2 = data.get('wifiPassword2')
+
+        data = {
+            current_date: {"ssid": selected_ssid, "password": password1},
+            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": password2}
+        }
+
+        with open("network.json", "w") as json_file:
+            json.dump(data, json_file, indent=4)
+
+        response_data = {'success': True, 'message': 'Changes saved successfully'}
+        return jsonify(response_data), 200
+    except Exception as e:
+        error_message = 'An error occurred. Please try again.'
+        print("Error:", e)
+        return jsonify({'success': False, 'message': error_message}), 500
 
 # Stream the camera feed
 @app.route('/video')
