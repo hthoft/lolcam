@@ -16,8 +16,8 @@ def update_network_password():
         # Convert keys to date objects and compare
         for key, value in network_info.items():
             key_date = datetime.strptime(key, '%Y-%m-%d').date()
-            print(type(key_date))
-            print(type(today))
+            print(key_date)
+            print(today)
             if key_date == today:
                 print("Test")
                 ssid = value['ssid']
