@@ -2,14 +2,14 @@ import json
 from datetime import datetime
 import os
 import subprocess
+from network_checker import InternetChecker
 
 json_file_path = 'network.json'
 wpa_supplicant_conf_path = '/etc/wpa_supplicant/wpa_supplicant.conf'
 
 def update_network_password():
     today = datetime.now().strftime('%Y-%m-%d')
-    
-    # Read the JSON file to get the SSID and password for today
+
     try:
         with open(json_file_path, 'r') as file:
             network_info = json.load(file)
@@ -21,21 +21,7 @@ def update_network_password():
         
         ssid = today_info['ssid']
         password = today_info['password']
-        print(ssid, password)
-        conf_content = f'''
-                        ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-                        update_config=1
-                        country=GB
-
-                        network={{
-                            ssid="{ssid}"
-                            psk="{password}"
-                            key_mgmt=WPA-PSK
-                        }}
-                        '''
-        with open(wpa_supplicant_conf_path, 'w') as conf_file:
-            conf_file.write(conf_content)
-        subprocess.run(['wpa_cli', '-i', 'wlan0', 'reconfigure'])
+        checker = InternetChecker(ssid=ssid, psk=password)
         
         print(f"Network {ssid} password for {today} updated successfully.")
     
