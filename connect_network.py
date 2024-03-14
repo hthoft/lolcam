@@ -16,7 +16,7 @@ def update_network_password():
             print("Loaded network info:", network_info)
             
         today_info = network_info.get(today)
-        
+        print(today_info)
         if today_info is None:
             print(f"No network info found for {today}.")
             return
