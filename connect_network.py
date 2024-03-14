@@ -8,9 +8,11 @@ wpa_supplicant_conf_path = '/etc/wpa_supplicant/wpa_supplicant.conf'
 
 def update_network_password():
     today = datetime.now().strftime('%Y-%m-%d')
+    print(today)
     try:
         with open(json_file_path, 'r') as file:
             network_info = json.load(file)
+            print(network_info)
             
         today_info = network_info.get(today)
         if today_info is None:
