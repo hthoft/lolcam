@@ -7,9 +7,9 @@ json_file_path = 'network.json'
 wpa_supplicant_conf_path = '/etc/wpa_supplicant/wpa_supplicant.conf'
 
 def update_network_password():
-    today = datetime.now().strftime('%Y-%m-%d')
+    today1 = datetime.now().strftime('%Y-%m-%d')
     print(f"Today's date: {today}")
-    
+    today = string(today1)
     try:
         with open(json_file_path, 'r') as file:
             network_info = json.load(file)
