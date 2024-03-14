@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, jsonify, Response
 from picamera2 import Picamera2, Preview
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import time
 import cv2
@@ -110,14 +110,16 @@ def settings():
     try:
         data = request.get_json()
         selected_ssid = "AAU-1-DAY"
-        wifi_password = data.get('wifiPassword')
+        wifi_password1 = data.get('wifiPassword')  # Corrected variable name
         wifi_password2 = data.get('wifiPassword2')
 
+        # Constructing the data dictionary
         data = {
-            current_date: {"ssid": selected_ssid, "password": password1},
-            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": password2}
+            'current_date': {"ssid": selected_ssid, "password": wifi_password1},  # Corrected variable name
+            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": wifi_password2}
         }
 
+        # Writing the data to a JSON file
         with open("network.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
