@@ -15,7 +15,7 @@ def update_network_password():
             network_info = json.load(file)
             print("Loaded network info:", network_info)
             
-        today_info = network_info.get(today)
+        today_info = network_info.get()
         print(today_info)
         if today_info is None:
             print(f"No network info found for {today}.")
