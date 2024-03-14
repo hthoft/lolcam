@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, jsonify, Response
 from picamera2 import Picamera2, Preview
 from datetime import datetime
+import json
 import time
 import cv2
 import numpy as np
