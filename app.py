@@ -103,24 +103,21 @@ def capture_next():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500 
      
-@app.route("/settings", methods=['GET', 'POST'])
+@app.route("/settings", methods=['POST'])
 def settings():
-    if request.method == 'GET':
-        scanner = wifi.Cell.all('wlan0')
-        networks = [(cell.signal, cell.ssid) for cell in scanner]
-        return jsonify(networks)
-    elif request.method == 'POST':
-        selected_ssid = request.form['ssidSelection']
-        password = request.form['wifiPassword']
-        try:
-            for cell in scanner:
-                if cell.ssid == selected_ssid:
-                    scheme = wifi.Scheme.for_cell('wlan0', cell.ssid, cell, password)
-                    scheme.save()
-                    scheme.activate()
-                    return jsonify({"success": True, "message": "WiFi settings updated successfully."})
-        except Exception as e:
-            return jsonify({"success": False, "message": str(e)}), 400
+    if request.method == 'POST':
+        selected_ssid = "AAU-1-DAY"
+        password1 = request.form['wifiPassword']
+        password2 = request.form['wifiPassword2']
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        
+        data = {
+            current_date: {"ssid": selected_ssid, "password": password1},
+            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": password2}
+        }
+
+        with open("network.json", "w") as json_file:
+            json.dump(data, json_file, indent=4)
 
 # Stream the camera feed
 @app.route('/video')
