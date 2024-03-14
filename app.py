@@ -118,7 +118,7 @@ def settings():
 
         with open("network.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
-        return jsonify({"success": True, "message": "WiFi settings updated successfully."})
+        return jsonify({"success": True, "message": "WiFi settings updated successfully."}), 200
 
 # Stream the camera feed
 @app.route('/video')
