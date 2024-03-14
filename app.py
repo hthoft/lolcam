@@ -120,7 +120,7 @@ def settings():
         }
 
         # Writing the data to a JSON file
-        with open("lolcam/network.json", "w") as json_file:
+        with open("network.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
         response_data = {'success': True, 'message': 'Changes saved successfully'}
