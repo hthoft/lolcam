@@ -7,23 +7,21 @@ json_file_path = 'network.json'
 wpa_supplicant_conf_path = '/etc/wpa_supplicant/wpa_supplicant.conf'
 
 def update_network_password():
-    today = datetime.now().date()
+    today = datetime.now().strftime('%Y-%m-%d')
     
+    # Read the JSON file to get the SSID and password for today
     try:
         with open(json_file_path, 'r') as file:
             network_info = json.load(file)
             
-        # Convert keys to date objects and compare
-        for key, value in network_info.items():
-            key_date = datetime.strptime(key, '%Y-%m-%d').date()
-            print(key_date)
-            print(today)
-            if key_date == today:
-                print("Test")
-                ssid = value['ssid']
-                password = value['password']
-                print(f"Today's network SSID: {ssid} with password: {password}")
+        today_info = network_info.get(today)
+        if today_info is None:
+            print(f"No network info found for {today}.")
+            return
         
+        ssid = today_info['ssid']
+        password = today_info['password']
+        print(ssid, password)
         conf_content = f'''
                         ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
                         update_config=1
