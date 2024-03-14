@@ -349,7 +349,8 @@
                 if (data.success) {
                     // Handle success, for example, by closing the modal or redirecting
                     alert('Changes saved successfully');
-                    // $('#settingsModal').modal('hide');
+                    const modal = document.getElementById('settingsModal');
+                    modal.style.display = 'none';
                 } else {
                     // Handle failure
                     alert(data.message); // Show error message
