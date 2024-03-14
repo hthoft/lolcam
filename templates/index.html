@@ -368,17 +368,6 @@
                 spinner.style.display = 'none';
             });
     });
-    document.getElementById('togglePassword').addEventListener('click', function (e) {
-        const passwordInput = document.getElementById('wifiPassword');
-        const togglePasswordIcon = document.getElementById('togglePasswordIcon');
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            togglePasswordIcon.className = 'bi bi-eye-slash'; // Change icon to "eye-slash"
-        } else {
-            passwordInput.type = 'password';
-            togglePasswordIcon.className = 'bi bi-eye'; // Change icon back to "eye"
-        }
-    });
 
     const Keyboard = window.SimpleKeyboard.default;
 
