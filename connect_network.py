@@ -8,7 +8,7 @@ wpa_supplicant_conf_path = '/etc/wpa_supplicant/wpa_supplicant.conf'
 
 def update_network_password():
     today1 = datetime.now().strftime('%Y-%m-%d')
-    print(f"Today's date: {today}")
+    print(f"Today's date: {today1}")
     today = string(today1)
     try:
         with open(json_file_path, 'r') as file:
