@@ -18,10 +18,10 @@ import serial
 #import rpi.GPIO
 
 app = Flask(__name__)
-zoom_level = 1.2
 
 # Initialize the Pi Camera
 picam2 = Picamera2()
+zoom_level = 3.0
 
 preview_config = picam2.create_preview_configuration(main={"size": (1920, 1080)})
 capture_config = {"main": {"size": (1920, 1080)}}  # 1080p capture configuration
@@ -34,39 +34,6 @@ url = "https://drive.google.com/drive/folders/"
 
 ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
 time.sleep(2)
-
-def create_picture_folder():
-    # Define the path for the folder
-    pictures_dir = "/home/lol/Pictures"
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    folder_path = os.path.join(pictures_dir, current_date)
-    
-    # Create the folder if it doesn't exist
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f"Created folder: {folder_path}")
-
-
-@app.route("/set_zoom", methods=['POST'])
-def set_zoom():
-    global zoom_level
-    try:
-        # Get the zoom level from the request
-        data = request.get_json()
-        zoom_level = float(data.get("zoom", 1.0))  # Default zoom is 1.0 if not provided
-
-        # Ensure zoom level is within a reasonable range (1.0 - 4.0 for example)
-        if zoom_level < 1.0:
-            zoom_level = 1.0
-        elif zoom_level > 4.0:
-            zoom_level = 4.0
-
-        # Update the zoom level on the camera
-        apply_zoom()
-
-        return jsonify({"success": True, "zoom_level": zoom_level}), 200
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
 
 def apply_zoom():
     global zoom_level
@@ -83,11 +50,22 @@ def apply_zoom():
     x_offset = (width - new_width) // 2
     y_offset = (height - new_height) // 2
 
-    # Set the crop area
+    # Set the crop area to zoom in
     crop_rect = (x_offset, y_offset, new_width, new_height)
     picam2.set_controls({"ScalerCrop": crop_rect})
 
 
+
+def create_picture_folder():
+    # Define the path for the folder
+    pictures_dir = "/home/lol/Pictures"
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    folder_path = os.path.join(pictures_dir, current_date)
+    
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Created folder: {folder_path}")
 
 
 @app.route('/')
@@ -205,6 +183,7 @@ def generate_frames():
 if __name__ == '__main__':
     try:
         create_picture_folder()
+        apply_zoom()
         app.run(host='0.0.0.0', port=50005, debug=True, use_reloader=False)
     finally:
         picam2.stop()  # Ensure the camera is stopped
