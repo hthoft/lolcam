@@ -21,7 +21,7 @@ app = Flask(__name__)
 
 # Initialize the Pi Camera
 picam2 = Picamera2()
-zoom_level = 1.5
+zoom_level = 1.2
 
 preview_config = picam2.create_preview_configuration(main={"size": (1920, 1080)})
 capture_config = {"main": {"size": (1920, 1080)}}  # 1080p capture configuration
