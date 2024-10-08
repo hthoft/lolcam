@@ -22,7 +22,11 @@
             height: 800px;
             background-color: #ccc;
         }
-
+        html, body {
+            touch-action: manipulation; /* Disables pinch-zoom */
+            -ms-touch-action: manipulation;
+            overscroll-behavior: none; /* Prevents double-tap zoom */
+        }
         .center-box {
             position: absolute;
             top: 50%;
