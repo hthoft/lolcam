@@ -1,32 +1,38 @@
 import os
 import io
+import json
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
-class GoogleDriveUploader:
-    SCOPES = ['https://www.googleapis.com/auth/drive']
-    TOKEN_PATH = 'token.json'
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
 
+
+class GoogleDriveUploader:
     def __init__(self):
+        self.scopes = config["google_drive"]["scopes"]
+        self.token_path = config["google_drive"]["token_path"]
+        self.credentials_file = config["google_drive"]["credentials_file"]
         self.creds = self._authenticate()
         self.service = build('drive', 'v3', credentials=self.creds)
 
     def _authenticate(self):
         """Authenticate using the OAuth2 token."""
         creds = None
-        if os.path.exists(self.TOKEN_PATH):
-            creds = Credentials.from_authorized_user_file(self.TOKEN_PATH, self.SCOPES)
+        if os.path.exists(self.token_path):
+            creds = Credentials.from_authorized_user_file(self.token_path, self.scopes)
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.SCOPES)
+                    self.credentials_file, self.scopes)
                 creds = flow.run_local_server(port=0)
-            with open(self.TOKEN_PATH, 'w') as token:
+            with open(self.token_path, 'w') as token:
                 token.write(creds.to_json())
         return creds
 
@@ -38,6 +44,7 @@ class GoogleDriveUploader:
             'name': file_name,
             'parents': [folder_id]
         }
+        # Assuming the uploaded file is an image; adjust the MIME type as needed.
         media = MediaIoBaseUpload(io.FileIO(file_path, 'rb'), mimetype='image/jpeg')
         file = self.service.files().create(
             body=file_metadata,
@@ -46,9 +53,9 @@ class GoogleDriveUploader:
             supportsAllDrives=True
         ).execute()
         print('File uploaded. File ID:', file.get('id'))
-        return(file.get('id'))
+        return file.get('id')
 
-# This function now requires a folder_id parameter to specify where the file should be uploaded.
+
 def upload_picture(file_name, folder_id):
     """Function to upload a picture to a specified folder in Google Drive."""
     uploader = GoogleDriveUploader()

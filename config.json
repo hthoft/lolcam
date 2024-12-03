@@ -1,0 +1,34 @@
+{
+    "camera": {
+      "preview_size": [1920, 1080],
+      "capture_size": [1920, 1080],
+      "zoom_level": 1.2
+    },
+    "drive": {
+      "base_url": "https://drive.google.com/drive/folders/"
+    },
+    "directories": {
+      "pictures_path": "/home/lol/Pictures"
+    },
+    "serial": {
+      "port": "/dev/ttyUSB0",
+      "baud_rate": 9600,
+      "timeout": 1
+    },
+    "wifi": {
+      "ssid_default": "AAU-1-DAY"
+    },
+    "app": {
+      "host": "0.0.0.0",
+      "port": 50005,
+      "debug": true
+    },
+    "google_drive": {
+        "scopes": ["https://www.googleapis.com/auth/drive"],
+        "token_path": "token.json",
+        "default_folder_id": "1zlrIZp1JH9zUeyOrvfILCjUFcSBARk6N",
+        "credentials_file": "credentials.json"
+    }
+      
+  }
+  

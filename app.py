@@ -1,99 +1,83 @@
-from flask import Flask, request, render_template, jsonify, Response
-from picamera2 import Picamera2, Preview
-from datetime import datetime, timedelta
-import json
-import time
-import cv2
-import numpy as np
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-from googleapiclient.http import MediaFileUpload
-import wifi
-import io
 import os
+import time
+import json
+from datetime import datetime, timedelta
+from flask import Flask, request, render_template, jsonify, Response
+from picamera2 import Picamera2
+import cv2
 from PIL import Image
 from drive_uploader import upload_picture
 from drive_folder import create_folder_in_drive
 import serial
-#import rpi.GPIO
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
 
 app = Flask(__name__)
 
-# Initialize the Pi Camera
+# Initialize PiCamera and Serial
 picam2 = Picamera2()
-zoom_level = 1.2
-
-preview_config = picam2.create_preview_configuration(main={"size": (1920, 1080)})
-capture_config = {"main": {"size": (1920, 1080)}}  # 1080p capture configuration
+preview_config = picam2.create_preview_configuration(main={"size": tuple(config["camera"]["preview_size"])})
+capture_config = {"main": {"size": tuple(config["camera"]["capture_size"])}}
 picam2.configure(preview_config)
 picam2.start()
-folder_id = None
-filename = None
-url = "https://drive.google.com/drive/folders/"
 
-
-ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+ser = serial.Serial(config["serial"]["port"], config["serial"]["baud_rate"], timeout=config["serial"]["timeout"])
 time.sleep(2)
 
+folder_id = None
+
+
 def apply_zoom():
-    global zoom_level
-
-    # Get the sensor size and calculate the crop rectangle based on the zoom level
-    sensor_size = picam2.sensor_resolution  # e.g., (4656, 3496) for a 12MP sensor
+    """Apply zoom based on the zoom level from the config."""
+    zoom_level = config["camera"]["zoom_level"]
+    sensor_size = picam2.sensor_resolution
     width, height = sensor_size
-
-    # Calculate the new width and height based on zoom level
     new_width = int(width / zoom_level)
     new_height = int(height / zoom_level)
-
-    # Center the crop rectangle
     x_offset = (width - new_width) // 2
     y_offset = (height - new_height) // 2
-
-    # Set the crop area to zoom in
     crop_rect = (x_offset, y_offset, new_width, new_height)
     picam2.set_controls({"ScalerCrop": crop_rect})
 
 
-
 def create_picture_folder():
-    # Define the path for the folder
-    pictures_dir = "/home/lol/Pictures"
+    """Create a folder for saving pictures."""
+    pictures_dir = config["directories"]["pictures_path"]
     current_date = datetime.now().strftime("%Y-%m-%d")
     folder_path = os.path.join(pictures_dir, current_date)
-    
-    # Create the folder if it doesn't exist
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f"Created folder: {folder_path}")
+    os.makedirs(folder_path, exist_ok=True)
+    print(f"Created folder: {folder_path}")
 
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
+
 @app.route("/initiate", methods=['POST', 'GET'])
 def initiate():
     print("Starting cam")
-    time.sleep(5)  # Use time.sleep for delays
+    time.sleep(5)
     return jsonify({'hide': True})
 
 
 @app.route("/capture", methods=['GET'])
 def capture():
     global folder_id
-    global filename
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     try:
-        # Capture the image
-        filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        filename = f"{config['directories']['pictures_path']}/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
             ser.write(b'1')
             time.sleep(0.5)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error sending serial signal: {e}")
+
         picam2.capture_file(filename)
 
+        # Overlay handling
         base_image = Image.open(filename)
         overlay_image = Image.open('overlay.png')
         base_image.paste(overlay_image, (0, 0), overlay_image)
@@ -101,89 +85,88 @@ def capture():
 
         folder_id = create_folder_in_drive()
         upload_picture(filename, folder_id)
-        return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
+        return jsonify({"success": True, "message": "Photo captured and uploaded successfully.",
+                        "url": config['drive']['base_url'] + folder_id})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
 
 @app.route("/capture_next", methods=['GET'])
 def capture_next():
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     try:
-        # Capture the image
-        filename = f"Pictures/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        filename = f"{config['directories']['pictures_path']}/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
         try:
-            ser.write(b'1')  # Send a byte
+            ser.write(b'1')
             time.sleep(0.5)
-        except:
-            pass
-        picam2.capture_file(filename)  # Specify capture configuration here if needed
+        except Exception as e:
+            print(f"Error sending serial signal: {e}")
+
+        picam2.capture_file(filename)
+
+        # Overlay handling
         base_image = Image.open(filename)
         overlay_image = Image.open('overlay_dse.png')
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
+
         upload_picture(filename, folder_id)
-        return jsonify({"success": True, "message": "Photo captured and uploaded successfully.", "url": str(url+folder_id)})
+        return jsonify({"success": True, "message": "Photo captured and uploaded successfully.",
+                        "url": config['drive']['base_url'] + folder_id})
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500 
-     
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 @app.route('/settings', methods=['POST'])
 def settings():
     try:
         data = request.get_json()
-        selected_ssid = "AAU-1-DAY"
-        wifi_password1 = data.get('wifiPassword')  # Corrected variable name
+        wifi_password1 = data.get('wifiPassword')
         wifi_password2 = data.get('wifiPassword2')
 
-        # Constructing the data dictionary
-        data = {
-            (datetime.now()).strftime("%Y-%m-%d"): {"ssid": selected_ssid, "password": wifi_password1},  # Corrected variable name
-            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": "AAU-1-DAY", "password": wifi_password2}
+        network_data = {
+            datetime.now().strftime("%Y-%m-%d"): {"ssid": config["wifi"]["ssid_default"], "password": wifi_password1},
+            (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"): {"ssid": config["wifi"]["ssid_default"],
+                                                                        "password": wifi_password2}
         }
 
-        # Writing the data to a JSON file
         with open("network.json", "w") as json_file:
-            json.dump(data, json_file, indent=4)
+            json.dump(network_data, json_file, indent=4)
 
-        response_data = {'success': True, 'message': 'Changes saved successfully'}
-        return jsonify(response_data), 200
+        return jsonify({'success': True, 'message': 'Changes saved successfully'}), 200
     except Exception as e:
-        error_message = 'An error occurred. Please try again.'
-        print("Error:", e)
-        return jsonify({'success': False, 'message': error_message}), 500
+        return jsonify({'success': False, 'message': f"Error: {e}"}), 500
 
-# Stream the camera feed
+
 @app.route('/video')
 def video():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
 @app.route('/send_pulse')
 def send_pulse():
     try:
-        ser.write(b'1')  # Send a byte
+        ser.write(b'1')
         return "Pulse sent!"
-    except:
-        return "Failed to send pulse"
+    except Exception as e:
+        return f"Failed to send pulse: {e}"
+
 
 def generate_frames():
     while True:
-        frame = picam2.capture_array()  # Capture frame as a numpy array
-        # Convert the color space from BGR (OpenCV default) to RGB
+        frame = picam2.capture_array()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        # Encode the frame in JPEG format
-        (flag, encodedImage) = cv2.imencode(".jpg", frame)
+        flag, encodedImage = cv2.imencode(".jpg", frame)
         if not flag:
             continue
-        # Yield the encoded frame
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
-
 
 
 if __name__ == '__main__':
     try:
         create_picture_folder()
         apply_zoom()
-        app.run(host='0.0.0.0', port=50005, debug=True, use_reloader=False)
+        app.run(host=config["app"]["host"], port=config["app"]["port"], debug=config["app"]["debug"], use_reloader=False)
     finally:
-        picam2.stop()  # Ensure the camera is stopped
+        picam2.stop()
