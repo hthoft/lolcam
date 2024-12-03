@@ -28,6 +28,9 @@ time.sleep(2)
 
 folder_id = None
 
+# Preload the overlay image
+overlay_image = Image.open(config["overlay"]["file_path"])
+
 
 def apply_zoom():
     """Apply zoom based on the zoom level from the config."""
@@ -79,7 +82,6 @@ def capture():
 
         # Overlay handling
         base_image = Image.open(filename)
-        overlay_image = Image.open('overlay.png')
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
 
@@ -106,7 +108,6 @@ def capture_next():
 
         # Overlay handling
         base_image = Image.open(filename)
-        overlay_image = Image.open('overlay_dse.png')
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
 

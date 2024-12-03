@@ -1,4 +1,7 @@
 {
+    "overlay": {
+    "file_path": "overlay.png"
+    },
     "camera": {
       "preview_size": [1920, 1080],
       "capture_size": [1920, 1080],
