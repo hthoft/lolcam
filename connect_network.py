@@ -1,35 +1,47 @@
-import json
-from datetime import datetime
-import os
 import subprocess
-from network_checker import InternetChecker
 
-json_file_path = 'network.json'
-wpa_supplicant_conf_path = '/etc/wpa_supplicant/wpa_supplicant.conf'
-
-def update_network_password():
-    today = datetime.now().strftime('%Y-%m-%d')
-
+def connect_to_eduroam(ssid, username, password):
+    """
+    Connects to a WPA3-Enterprise network using nmcli.
+    """
     try:
-        with open(json_file_path, 'r') as file:
-            network_info = json.load(file)
-            
-        today_info = network_info.get(today)
-        if today_info is None:
-            print(f"No network info found for {today}.")
-            return
-        
-        ssid = today_info['ssid']
-        password = today_info['password']
-        checker = InternetChecker(ssid=ssid, psk=password)
-        
-        print(f"Network {ssid} password for {today} updated successfully.")
-    
-    except FileNotFoundError:
-        print("The JSON file or wpa_supplicant.conf was not found.")
-    except json.JSONDecodeError:
-        print("JSON file is not properly formatted.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        # Check if NetworkManager is running
+        subprocess.run(["systemctl", "is-active", "--quiet", "NetworkManager"], check=True)
+        print("NetworkManager is running.")
 
-update_network_password()
+        # Delete existing connection (if any)
+        subprocess.run(["nmcli", "connection", "delete", ssid], check=False)
+        print(f"Deleted any existing configuration for {ssid}.")
+
+        # Create a new connection
+        command = [
+            "nmcli", "connection", "add", "type", "wifi",
+            "ssid", ssid,
+            "name", ssid,
+            "--",
+            "802-1x.eap", "peap",
+            "802-1x.identity", username,
+            "802-1x.password", password,
+            "802-1x.phase2-auth", "mschapv2",
+            "wifi-sec.key-mgmt", "wpa-eap"
+        ]
+        subprocess.run(command, check=True)
+        print(f"Configured network {ssid}.")
+
+        # Bring up the connection
+        subprocess.run(["nmcli", "connection", "up", ssid], check=True)
+        print(f"Connected to {ssid} successfully!")
+
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+if __name__ == "__main__":
+    # Network credentials
+    network_ssid = "eduroam"
+    username = "396102@net.aau.dk"
+    password = "sahsnxjydrhmjgi"
+
+    # Connect to the network
+    connect_to_eduroam(network_ssid, username, password)
