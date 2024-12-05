@@ -1,6 +1,6 @@
 import os
 import logging
-
+import json
 # Configure logging
 LOG_FILE_PATH = os.path.join(os.path.dirname(__file__), '/home/lol/logs', 'application.log')
 os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)  # Ensure the logs directory exists
@@ -23,7 +23,6 @@ logging.info("Configuration loaded successfully")
 
 
 import time
-import json
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, jsonify, Response
 from picamera2 import Picamera2
