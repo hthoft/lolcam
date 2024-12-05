@@ -1,7 +1,29 @@
 import os
+import logging
+
+# Configure logging
+LOG_FILE_PATH = os.path.join(os.path.dirname(__file__), '/home/lol/logs', 'application.log')
+os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)  # Ensure the logs directory exists
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE_PATH),
+        logging.StreamHandler()
+    ]
+)
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+logging.info("Configuration loaded successfully")
+
+
 import time
 import json
-import logging
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, jsonify, Response
 from picamera2 import Picamera2
@@ -11,23 +33,6 @@ from drive_uploader import upload_picture
 from drive_folder import create_folder_in_drive
 import serial
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler("/home/lol/application.log"),
-        logging.StreamHandler()
-    ]
-)
-
-logging.info("Starting application")
-
-# Load configuration
-with open('config.json', 'r') as config_file:
-    config = json.load(config_file)
-
-logging.info("Configuration loaded successfully")
 
 app = Flask(__name__)
 
