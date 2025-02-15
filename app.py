@@ -1,6 +1,8 @@
 import os
 import logging
 import json
+from threading import Thread, Event
+
 # Configure logging
 LOG_FILE_PATH = os.path.join(os.path.dirname(__file__), '/home/lol/logs', 'application.log')
 os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)  # Ensure the logs directory exists
@@ -109,37 +111,68 @@ def initiate():
     return jsonify({'hide': True})
 
 
+folder_creation_event = Event()
+folder_id = None
+
 @app.route("/capture", methods=['GET'])
 def capture():
     global folder_id
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     logging.info("Capture endpoint accessed")
+
+    # Start the folder creation in a separate thread immediately if it hasn't started
+    def create_folder():
+        global folder_id
+        try:
+            folder_id = create_folder_in_drive()
+            folder_creation_event.set()  # Signal that the folder creation is complete
+            logging.info(f"Drive folder created: {folder_id}")
+        except Exception as e:
+            logging.error(f"Error creating folder in Drive: {e}")
+            folder_creation_event.set()  # Avoid blocking indefinitely if folder creation fails
+
+    if not folder_creation_event.is_set():  # Ensure folder creation is not repeated
+        folder_thread = Thread(target=create_folder)
+        folder_thread.start()
+
     try:
+        # File path for the captured image
         filename = f"{config['directories']['pictures_path']}/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        
+        # Send serial signal
         try:
             ser.write(b'1')
             time.sleep(0.5)
             logging.info("Serial signal sent")
         except Exception as e:
             logging.error(f"Error sending serial signal: {e}")
-
+        
+        # Capture the photo
         picam2.capture_file(filename)
         logging.info(f"Photo captured and saved to {filename}")
-
-        # Overlay handling
+        
+        # Apply overlay
         base_image = Image.open(filename)
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
         logging.info("Overlay applied to the photo")
 
-        folder_id = create_folder_in_drive()
+        # Wait for folder creation if not yet completed
+        folder_creation_event.wait()  # Block until folder creation is done
+
+        if not folder_id:
+            raise Exception("Failed to create folder in Drive")
+
+        # Upload the picture to the folder
         upload_picture(filename, folder_id)
         logging.info("Photo uploaded to Drive")
+        
         return jsonify({"success": True, "message": "Photo captured and uploaded successfully.",
                         "url": config['drive']['base_url'] + folder_id})
     except Exception as e:
         logging.error(f"Error capturing photo: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 @app.route("/capture_next", methods=['GET'])
