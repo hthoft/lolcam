@@ -323,6 +323,7 @@
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
     let countdownInterval;
+    
     document.getElementById('wifiSettingsForm').addEventListener('submit', function (event) {
         event.preventDefault();  // Prevent the default form submission
 
@@ -359,7 +360,10 @@
                     modal.classList.remove('show');
 
                     // Hide the backdrop by removing 'modal-backdrop' class
-                    document.getElementsByClassName('modal-backdrop')[0].remove();
+                    const backdrop = document.getElementsByClassName('modal-backdrop')[0];
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
 
                     // Reset the modal style
                     modal.style.display = 'none';
@@ -397,6 +401,7 @@
     function onKeyPress(button) {
         console.log("Button pressed", button);
     }
+    
     function handleBackdoorClick(event) {
         // Prevents the event from propagating up to parent elements
         event.stopPropagation();
@@ -421,7 +426,6 @@
         consentModal.show(); // Show the modal on page load or trigger it based on a specific action
         document.querySelector('.camera-background').setAttribute('onclick', '');
 
-
         let countdown = 30; // 30 seconds countdown
         document.getElementById('declineButton').innerText = `Afvis (${countdown}s)`;
 
@@ -436,13 +440,11 @@
         }, 1000);
     }
 
-
     function startCountdown() {
         clearInterval(countdownInterval);
         let countdownValue = 3;
         const myDiv = document.getElementById('myDiv');
         myDiv.style.opacity = '0';
-
 
         setTimeout(() => {
             myDiv.style.opacity = '1';
@@ -464,8 +466,6 @@
         }, 700);
     }
 
-
-
     let isFirstCapture = true; // Flag to track if it's the first capture
 
     function flashAndCapture() {
@@ -484,32 +484,68 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        console.log('Photo captured and uploaded successfully. URL:', data.url);
-                        showQRCode(data.url); // Generate and show QR code in the modal
+                        console.log('Photo captured successfully:', data);
+                        showQRCodeOrOfflineMessage(data); // Use new function for offline/online handling
                         showPostCaptureModal(); // Show the modal after capture
                     } else {
                         console.error('Capture failed:', data.message);
+                        alert('Fejl ved billede: ' + data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error capturing photo:', error);
+                    alert('Netværksfejl ved billede optagelse');
                 });
 
             isFirstCapture = false; // After the first capture, switch flag off
         }, 500);
     }
 
-    function showQRCode(url) {
+    function showQRCodeOrOfflineMessage(data) {
         var qrCodeElement = document.getElementById("qrCode");
-        qrCodeElement.innerHTML = ''; // Clear previous QR code
-        new QRCode(qrCodeElement, {
-            text: url,
-            width: 512,
-            height: 512,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
+        var modalBodyElement = document.querySelector("#postCaptureModal .modal-body h4");
+        
+        qrCodeElement.innerHTML = ''; // Clear previous content
+        
+        if (data.offline_mode) {
+            // Show offline message instead of QR code
+            const offlineMessage = data.offline_message || "Arrangørene får billederne efter arrangement";
+            modalBodyElement.textContent = offlineMessage;
+            
+            // Create offline mode indicator
+            qrCodeElement.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px; border: 3px dashed #04cf5c; border-radius: 15px; background-color: rgba(4, 207, 92, 0.1);">
+                    <div style="font-size: 48px; margin-bottom: 20px;">📱</div>
+                    <div style="font-size: 24px; color: #04cf5c; font-weight: bold; margin-bottom: 10px;">Offline Mode</div>
+                    <div style="font-size: 16px; color: #ffffff; opacity: 0.8;">Billederne gemmes lokalt</div>
+                </div>
+            `;
+            
+            console.log('Operating in offline mode');
+        } else {
+            // Show QR code as normal
+            modalBodyElement.textContent = "Dine billeder er samlet her:";
+            
+            if (data.url) {
+                new QRCode(qrCodeElement, {
+                    text: data.url,
+                    width: 512,
+                    height: 512,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                console.log('QR Code generated for:', data.url);
+            } else {
+                // Fallback if URL is missing
+                qrCodeElement.innerHTML = '<div style="text-align: center; padding: 40px; font-size: 18px; color: #ff6b6b;">QR kode kunne ikke genereres</div>';
+            }
+        }
+    }
+
+    // Keep legacy function for backward compatibility
+    function showQRCode(url) {
+        showQRCodeOrOfflineMessage({ url: url, offline_mode: false });
     }
 
     function showPostCaptureModal() {
@@ -535,9 +571,6 @@
             }
         }, 1000);
     }
-
-
-
 
     function reset() {
         clearInterval(countdownInterval); // Clear the countdown interval if it's running
@@ -569,12 +602,11 @@
 
         var postCaptureModalElement = document.getElementById('postCaptureModal');
         var modal = bootstrap.Modal.getInstance(postCaptureModalElement);
-        modal.hide(); // Hide the modal if it's still showing
+        if (modal) {
+            modal.hide(); // Hide the modal if it's still showing
+        }
     }
-
-
-
-
 </script>
+
 
 </html>

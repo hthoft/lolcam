@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import socket
 # Configure logging
 LOG_FILE_PATH = os.path.join(os.path.dirname(__file__), '/home/lol/logs', 'application.log')
 os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)  # Ensure the logs directory exists
@@ -21,7 +22,6 @@ with open('config.json', 'r') as config_file:
 
 logging.info("Configuration loaded successfully")
 
-
 import time
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, jsonify, Response
@@ -32,8 +32,38 @@ from drive_uploader import upload_picture
 from drive_folder import create_folder_in_drive
 import serial
 
-
 app = Flask(__name__)
+
+# Global variables for network status
+network_available = False
+offline_mode = True
+folder_id = None
+
+def check_internet():
+    """Simple one-time internet check at startup."""
+    try:
+        socket.setdefaulttimeout(5)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(('8.8.8.8', 53))
+        logging.info("Internet connection verified")
+        return True
+    except Exception as e:
+        logging.warning(f"No internet connection: {e}")
+        return False
+
+def test_network_at_startup():
+    """Test network connectivity once at startup"""
+    global network_available, offline_mode
+    
+    logging.info("Testing network connectivity at startup...")
+    network_available = check_internet()
+    offline_mode = not network_available
+    
+    if network_available:
+        logging.info("Network available - Online mode")
+    else:
+        logging.warning("No network - Offline mode")
+    
+    return network_available
 
 # Initialize PiCamera and Serial
 try:
@@ -55,8 +85,6 @@ except Exception as e:
     logging.error(f"Error initializing serial communication: {e}")
     raise
 
-folder_id = None
-
 # Preload the overlay image
 try:
     overlay_image = Image.open(config["overlay"]["file_path"])
@@ -64,7 +92,6 @@ try:
 except Exception as e:
     logging.error(f"Error loading overlay image: {e}")
     raise
-
 
 def apply_zoom():
     """Apply zoom based on the zoom level from the config."""
@@ -82,7 +109,6 @@ def apply_zoom():
     except Exception as e:
         logging.error(f"Error applying zoom: {e}")
 
-
 def create_picture_folder():
     """Create a folder for saving pictures."""
     try:
@@ -95,12 +121,10 @@ def create_picture_folder():
         logging.error(f"Error creating picture folder: {e}")
         raise
 
-
 @app.route('/')
 def home():
     logging.info("Home endpoint accessed")
     return render_template('index.html')
-
 
 @app.route("/initiate", methods=['POST', 'GET'])
 def initiate():
@@ -108,14 +132,16 @@ def initiate():
     time.sleep(5)
     return jsonify({'hide': True})
 
-
 @app.route("/capture", methods=['GET'])
 def capture():
-    global folder_id
+    global folder_id, offline_mode
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     logging.info("Capture endpoint accessed")
+    
     try:
         filename = f"{config['directories']['pictures_path']}/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        
+        # Send serial signal
         try:
             ser.write(b'1')
             time.sleep(0.5)
@@ -123,31 +149,55 @@ def capture():
         except Exception as e:
             logging.error(f"Error sending serial signal: {e}")
 
+        # Capture and save photo
         picam2.capture_file(filename)
         logging.info(f"Photo captured and saved to {filename}")
 
-        # Overlay handling
+        # Apply overlay
         base_image = Image.open(filename)
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
         logging.info("Overlay applied to the photo")
 
-        folder_id = create_folder_in_drive()
-        upload_picture(filename, folder_id)
-        logging.info("Photo uploaded to Drive")
-        return jsonify({"success": True, "message": "Photo captured and uploaded successfully.",
-                        "url": config['drive']['base_url'] + folder_id})
+        # If online mode, try to upload
+        if not offline_mode:
+            try:
+                folder_id = create_folder_in_drive()
+                upload_picture(filename, folder_id)
+                logging.info("Photo uploaded to Drive")
+                return jsonify({
+                    "success": True, 
+                    "message": "Photo captured and uploaded successfully.",
+                    "url": config['drive']['base_url'] + folder_id,
+                    "offline_mode": False
+                })
+            except Exception as e:
+                logging.error(f"Upload failed: {e}")
+                # Don't change offline_mode, just return offline response for this capture
+        
+        # Offline response
+        logging.info("Photo saved locally")
+        return jsonify({
+            "success": True, 
+            "message": "Photo captured and saved locally.",
+            "offline_mode": True,
+            "offline_message": config['offline_mode']['message']
+        })
+        
     except Exception as e:
         logging.error(f"Error capturing photo: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
-
 
 @app.route("/capture_next", methods=['GET'])
 def capture_next():
+    global offline_mode
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     logging.info("Capture Next endpoint accessed")
+    
     try:
         filename = f"{config['directories']['pictures_path']}/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
+        
+        # Send serial signal
         try:
             ser.write(b'1')
             time.sleep(0.5)
@@ -155,23 +205,42 @@ def capture_next():
         except Exception as e:
             logging.error(f"Error sending serial signal: {e}")
 
+        # Capture and save photo
         picam2.capture_file(filename)
         logging.info(f"Photo captured and saved to {filename}")
 
-        # Overlay handling
+        # Apply overlay
         base_image = Image.open(filename)
         base_image.paste(overlay_image, (0, 0), overlay_image)
         base_image.save(filename)
         logging.info("Overlay applied to the photo")
 
-        upload_picture(filename, folder_id)
-        logging.info("Photo uploaded to Drive")
-        return jsonify({"success": True, "message": "Photo captured and uploaded successfully.",
-                        "url": config['drive']['base_url'] + folder_id})
+        # If online mode and we have a folder_id, try to upload
+        if not offline_mode and folder_id:
+            try:
+                upload_picture(filename, folder_id)
+                logging.info("Photo uploaded to Drive")
+                return jsonify({
+                    "success": True, 
+                    "message": "Photo captured and uploaded successfully.",
+                    "url": config['drive']['base_url'] + folder_id,
+                    "offline_mode": False
+                })
+            except Exception as e:
+                logging.error(f"Upload failed: {e}")
+        
+        # Offline response
+        logging.info("Photo saved locally")
+        return jsonify({
+            "success": True, 
+            "message": "Photo captured and saved locally.",
+            "offline_mode": True,
+            "offline_message": config['offline_mode']['message']
+        })
+        
     except Exception as e:
         logging.error(f"Error capturing photo: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
-
 
 @app.route('/settings', methods=['POST'])
 def settings():
@@ -195,12 +264,10 @@ def settings():
         logging.error(f"Error in settings endpoint: {e}")
         return jsonify({'success': False, 'message': f"Error: {e}"}), 500
 
-
 @app.route('/video')
 def video():
     logging.info("Video endpoint accessed")
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 
 @app.route('/send_pulse')
 def send_pulse():
@@ -213,7 +280,6 @@ def send_pulse():
         logging.error(f"Failed to send pulse: {e}")
         return f"Failed to send pulse: {e}"
 
-
 def generate_frames():
     logging.info("Generating video frames")
     while True:
@@ -225,12 +291,15 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
-
 if __name__ == '__main__':
     try:
         logging.info("Application starting")
         create_picture_folder()
         apply_zoom()
+        
+        # Test network connectivity once at startup
+        test_network_at_startup()
+        
         app.run(host=config["app"]["host"], port=config["app"]["port"], debug=config["app"]["debug"], use_reloader=False)
     finally:
         picam2.stop()

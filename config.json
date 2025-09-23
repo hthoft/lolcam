@@ -1,37 +1,38 @@
 {
     "overlay": {
-    "file_path": "overlay.png"
+        "file_path": "overlay.png"
     },
     "camera": {
-      "preview_size": [1920, 1080],
-      "capture_size": [1920, 1080],
-      "zoom_level": 1.2
+        "preview_size": [1920, 1080],
+        "capture_size": [1920, 1080],
+        "zoom_level": 1.2
     },
     "drive": {
-      "base_url": "https://drive.google.com/drive/folders/"
+        "base_url": "https://drive.google.com/drive/folders/"
     },
     "directories": {
-      "pictures_path": "/home/lol/Pictures"
+        "pictures_path": "/home/lol/Pictures"
     },
     "serial": {
-      "port": "/dev/ttyUSB0",
-      "baud_rate": 9600,
-      "timeout": 1
+        "port": "/dev/ttyUSB0",
+        "baud_rate": 9600,
+        "timeout": 1
     },
     "wifi": {
-      "ssid_default": "AAU-1-DAY"
+        "ssid_default": "AAU-1-DAY"
     },
     "app": {
-      "host": "0.0.0.0",
-      "port": 50005,
-      "debug": true
+        "host": "0.0.0.0",
+        "port": 50005,
+        "debug": true
     },
     "google_drive": {
         "scopes": ["https://www.googleapis.com/auth/drive"],
         "token_path": "token.json",
         "default_folder_id": "1KolDC9-iOvXNaZ2ZLztKF-TSVEjTjVt3",
         "credentials_file": "credentials.json"
+    },
+    "offline_mode": {
+        "message": "Arrangørene får billederne efter arrangement"
     }
-      
-  }
-  
+}
