@@ -14,6 +14,23 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
     <script src="{{ url_for('static', filename='qrcode.min.js') }}"></script>
     <style>
+        /* Performance optimizations */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            overflow: hidden; /* Prevent scrolling */
+            margin: 0;
+            padding: 0;
+        }
+
         .camera-background {
             position: absolute;
             top: 0;
@@ -21,12 +38,21 @@
             width: 1280px;
             height: 800px;
             background-color: #ccc;
+            cursor: pointer;
+            /* Add active state for immediate feedback */
+            transition: filter 0.1s ease;
         }
+
+        .camera-background:active {
+            filter: brightness(0.95);
+        }
+
         html, body {
-            touch-action: manipulation; /* Disables pinch-zoom */
+            touch-action: manipulation;
             -ms-touch-action: manipulation;
-            overscroll-behavior: none; /* Prevents double-tap zoom */
+            overscroll-behavior: none;
         }
+
         .center-box {
             position: absolute;
             top: 50%;
@@ -37,13 +63,11 @@
             padding: 20px;
             animation: pulse 1s infinite alternate;
             width: 430px;
-            /* Set the width of the center box */
             text-align: center;
-            /* Center-align the text */
             opacity: 1;
-            /* Initially visible */
-            transition: opacity 0.5s ease-in-out;
-            /* CSS transition for opacity */
+            transition: all 0.3s ease-in-out; /* Faster transitions */
+            will-change: transform, opacity; /* GPU acceleration hint */
+            border-radius: 8px;
         }
 
         .pre-loader {
@@ -53,37 +77,40 @@
             transform: translate(-50%, -50%);
             padding: 20px;
             text-align: center;
-            /* Center-align the text */
             opacity: 1;
-            /* Initially visible */
-            transition: opacity 0.5s ease-in-out;
-            /* CSS transition for opacity */
+            transition: opacity 0.3s ease-in-out; /* Faster transition */
             color: #04cf5c;
             font-size: 72px;
+            will-change: opacity;
+        }
 
-            .spinner-border {
-                --bs-spinner-width: 8rem;
-                --bs-spinner-height: 8rem;
-                --bs-spinner-vertical-align: -0.125em;
-                --bs-spinner-border-width: 0.25em;
-                --bs-spinner-animation-speed: 1.75s;
-                --bs-spinner-animation-name: spinner-border;
-                border: var(--bs-spinner-border-width) solid currentcolor;
-                border-right-color: transparent;
-            }
+        .pre-loader .spinner-border {
+            --bs-spinner-width: 8rem;
+            --bs-spinner-height: 8rem;
+            --bs-spinner-vertical-align: -0.125em;
+            --bs-spinner-border-width: 0.25em;
+            --bs-spinner-animation-speed: 1s; /* Faster spinner */
+            --bs-spinner-animation-name: spinner-border;
+            border: var(--bs-spinner-border-width) solid currentcolor;
+            border-right-color: transparent;
         }
 
         .modal-body h4 {
             overflow: hidden;
-            /* Hide overflow */
             white-space: nowrap;
-            /* Prevent text from wrapping */
             text-overflow: ellipsis;
-            /* Add an ellipsis for overflow text */
             max-width: 100%;
-            /* Ensure the element does not exceed its container */
         }
 
+        .green-box-right, .green-box-left {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #04cf5c;
+            border-radius: 4px;
+            will-change: transform; /* GPU acceleration */
+            transition: transform 0.1s ease;
+        }
 
         .green-box-right {
             position: absolute;
@@ -91,13 +118,6 @@
             right: -20px;
             width: 150px;
             height: 40px;
-            background-color: #04cf5c;
-            display: flex;
-            /* Enable flex layout to center text vertically and horizontally */
-            align-items: center;
-            /* Center vertically */
-            justify-content: center;
-            /* Center horizontally */
         }
 
         .green-box-left {
@@ -106,13 +126,6 @@
             right: 300px;
             width: 150px;
             height: 40px;
-            background-color: #04cf5c;
-            display: flex;
-            /* Enable flex layout to center text vertically and horizontally */
-            align-items: center;
-            /* Center vertically */
-            justify-content: center;
-            /* Center horizontally */
         }
 
         #flash {
@@ -124,12 +137,21 @@
             background-color: white;
             opacity: 0;
             pointer-events: none;
-            /* Ensures clicks pass through */
-            transition: opacity 0.2s ease-in-out;
-            /* Adjust timing for faster/slower flash */
+            transition: opacity 0.1s ease-in-out; /* Much faster flash */
             z-index: 10;
+            will-change: opacity;
         }
 
+        /* Faster modal transitions */
+        .modal.fade .modal-dialog {
+            transition: transform 0.2s ease-out; /* Faster modal animation */
+        }
+
+        .modal.fade {
+            transition: opacity 0.2s linear;
+        }
+
+        /* Keyboard optimizations */
         .hg-theme-default {
             background-color: #04cf5c;
         }
@@ -147,6 +169,11 @@
             justify-content: center;
             padding: 5px;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            transition: background-color 0.1s ease; /* Faster button feedback */
+        }
+
+        .hg-theme-default .hg-button:active {
+            background-color: #333;
         }
 
         .hg-row .hg-button:not(:last-child) {
@@ -157,19 +184,38 @@
             margin-bottom: 1px;
         }
 
+        /* Faster pulse animation */
         @keyframes pulse {
             0% {
                 transform: translate(-50%, -50%) scale(1);
             }
-
             100% {
-                transform: translate(-50%, -50%) scale(1.1);
+                transform: translate(-50%, -50%) scale(1.05); /* Smaller scale for smoother animation */
             }
+        }
+
+        /* Snappier button interactions */
+        .btn {
+            transition: all 0.1s ease !important;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
         }
 
         .hidden {
             opacity: 0;
-            /* Hidden when opacity is 0 */
+        }
+
+        /* Preload critical elements */
+        #camera-feed {
+            will-change: auto; /* Let browser optimize */
+        }
+
+        /* Optimize countdown display */
+        .countdown-display {
+            will-change: contents;
+            font-feature-settings: "tnum"; /* Tabular numbers for consistent width */
         }
     </style>
 </head>
@@ -177,7 +223,7 @@
 <body>
     <div class="camera-background" onclick="callFlaskRouteAndToggleDiv()">
         <img id="camera-feed" src="/video" alt="Camera Feed"
-            style="width: 1280px; height: 800px; object-fit: cover; object-position: center;">
+            style="width: 1280px; height: 800px; object-fit: cover; object-position: center;" loading="eager">
         <div id="flash"></div>
         <div id="myDiv" class="center-box rounded-2">
             <h1 style="font-size: 75px;">TRYK HER</h1>
@@ -189,13 +235,15 @@
             </div>
         </div>
         <div id="spinner" class="pre-loader" style="opacity: 0; color: #04cf5c;">
-            <div class="spinner-border text-white" role="status" style="">
+            <div class="spinner-border text-white" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
         <div id="backdoor" onclick="handleBackdoorClick(event)"
             style="width: 50px; height: 50px; position: absolute; top: 0; right: 0;"></div>
     </div>
+
+    <!-- Modals remain the same but with faster transitions -->
     <div class="modal fade" id="consentModal" data-bs-backdrop="static" tabindex="-1"
         aria-labelledby="consentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen modal-dialog-centered">
@@ -249,6 +297,7 @@
             </div>
         </div>
     </div>
+
     <div class="modal fade" id="settingsModal" data-bs-backdrop="static" tabindex="-1"
         aria-labelledby="settingsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen modal-dialog-centered">
@@ -274,10 +323,8 @@
                                     placeholder="Indtast WiFi Password for dag 2">
                             </div>
                         </div>
-
                     </form>
                     <div class="simple-keyboard"></div>
-
                     <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.js"></script>
                 </div>
                 <div class="modal-footer">
@@ -290,8 +337,8 @@
                 </div>
             </div>
         </div>
-
     </div>
+
     <div class="modal fade" id="postCaptureModal" tabindex="-1" aria-labelledby="postCaptureModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-fullscreen modal-dialog-centered">
@@ -319,19 +366,27 @@
         </div>
     </div>
 </body>
+
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
     let countdownInterval;
     
+    // Optimize DOM queries by caching elements
+    const elements = {
+        myDiv: document.getElementById('myDiv'),
+        flashDiv: document.getElementById('flash'),
+        spinner: document.getElementById('spinner'),
+        qrCode: document.getElementById('qrCode'),
+        cameraBackground: document.querySelector('.camera-background')
+    };
+    
     document.getElementById('wifiSettingsForm').addEventListener('submit', function (event) {
-        event.preventDefault();  // Prevent the default form submission
+        event.preventDefault();
 
-        // Show the spinner
         const spinner = document.getElementById('spinner');
         spinner.style.display = 'inline-block';
 
-        // Disable the submit button to prevent multiple submissions
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
 
@@ -340,54 +395,37 @@
             wifiPassword: formData.get('wifiPassword'),
             wifiPassword2: formData.get('wifiPassword2'),
         };
-        console.log("data", data);
+
         fetch('/settings', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                if (data.success) {
-                    // Handle success, for example, by closing the modal or redirecting
-                    alert('Changes saved successfully');
-                    const modal = document.getElementById('settingsModal');
-
-                    // Hide the modal by removing 'show' class
-                    modal.classList.remove('show');
-
-                    // Hide the backdrop by removing 'modal-backdrop' class
-                    const backdrop = document.getElementsByClassName('modal-backdrop')[0];
-                    if (backdrop) {
-                        backdrop.remove();
-                    }
-
-                    // Reset the modal style
-                    modal.style.display = 'none';
-                } else {
-                    // Handle failure
-                    alert(data.message); // Show error message
-                    // Re-enable the submit button for another try
-                    submitBtn.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-                // Re-enable the submit button for another try
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Changes saved successfully');
+                const modal = document.getElementById('settingsModal');
+                modal.classList.remove('show');
+                const backdrop = document.getElementsByClassName('modal-backdrop')[0];
+                if (backdrop) backdrop.remove();
+                modal.style.display = 'none';
+            } else {
+                alert(data.message);
                 submitBtn.disabled = false;
-            })
-            .finally(() => {
-                // Hide the spinner regardless of the outcome
-                spinner.style.display = 'none';
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            submitBtn.disabled = false;
+        })
+        .finally(() => {
+            spinner.style.display = 'none';
+        });
     });
 
     const Keyboard = window.SimpleKeyboard.default;
-
     const myKeyboard = new Keyboard({
         onChange: input => onChange(input),
         onKeyPress: button => onKeyPress(button)
@@ -395,7 +433,6 @@
 
     function onChange(input) {
         document.querySelector(".input").value = input;
-        console.log("Input changed", input);
     }
 
     function onKeyPress(button) {
@@ -403,18 +440,12 @@
     }
     
     function handleBackdoorClick(event) {
-        // Prevents the event from propagating up to parent elements
         event.stopPropagation();
-
         var settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'), {
             keyboard: false,
             backdrop: 'static'
         });
-
         settingsModal.show();
-
-        // Log to console or handle the backdoor click as needed
-        console.log('Backdoor clicked');
     }
 
     function callFlaskRouteAndToggleDiv() {
@@ -423,19 +454,20 @@
             backdrop: 'static'
         });
 
-        consentModal.show(); // Show the modal on page load or trigger it based on a specific action
-        document.querySelector('.camera-background').setAttribute('onclick', '');
+        consentModal.show();
+        elements.cameraBackground.setAttribute('onclick', '');
 
-        let countdown = 30; // 30 seconds countdown
-        document.getElementById('declineButton').innerText = `Afvis (${countdown}s)`;
+        let countdown = 30;
+        const declineBtn = document.getElementById('declineButton');
+        declineBtn.innerText = `Afvis (${countdown}s)`;
 
         countdownInterval = setInterval(() => {
             countdown--;
-            document.getElementById('declineButton').innerText = `Afvis (${countdown}s)`;
+            declineBtn.innerText = `Afvis (${countdown}s)`;
             if (countdown <= 0) {
                 clearInterval(countdownInterval);
-                consentModal.hide(); // Hide the modal
-                reset(); // Call the reset function
+                consentModal.hide();
+                reset();
             }
         }, 1000);
     }
@@ -443,91 +475,87 @@
     function startCountdown() {
         clearInterval(countdownInterval);
         let countdownValue = 3;
-        const myDiv = document.getElementById('myDiv');
-        myDiv.style.opacity = '0';
+        
+        // Immediate feedback - start transition right away
+        elements.myDiv.style.opacity = '0';
 
+        // Reduced timeout for snappier feel
         setTimeout(() => {
-            myDiv.style.opacity = '1';
-            myDiv.style.backgroundColor = 'transparent'; // Make background transparent
-            myDiv.style.animation = 'none';
-            myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>'; // Show initial countdown value
-            myDiv.classList.remove('hidden'); // Make sure the div is visible
+            elements.myDiv.style.opacity = '1';
+            elements.myDiv.style.backgroundColor = 'transparent';
+            elements.myDiv.style.animation = 'none';
+            elements.myDiv.innerHTML = `<h1 class="countdown-display" style="font-size: 120px;">${countdownValue}</h1>`;
+            elements.myDiv.classList.remove('hidden');
+            
             const countdownInterval = setInterval(() => {
                 countdownValue--;
                 if (countdownValue > -1) {
-                    myDiv.innerHTML = '<h1 style="font-size: 120px;">' + countdownValue + '</h1>';
+                    elements.myDiv.innerHTML = `<h1 class="countdown-display" style="font-size: 120px;">${countdownValue}</h1>`;
                 } else {
                     clearInterval(countdownInterval);
-                    myDiv.innerHTML = '';
-                    myDiv.style.opacity = '0';
+                    elements.myDiv.innerHTML = '';
+                    elements.myDiv.style.opacity = '0';
                     flashAndCapture();
                 }
             }, 1000);
-        }, 700);
+        }, 300); // Reduced from 700ms
     }
 
-    let isFirstCapture = true; // Flag to track if it's the first capture
+    let isFirstCapture = true;
 
     function flashAndCapture() {
-        const flashDiv = document.getElementById('flash');
-        flashDiv.style.opacity = '1'; // Make flash div fully opaque
+        // Immediate flash feedback
+        elements.flashDiv.style.opacity = '1';
 
+        // Shorter flash duration for snappier feel
         setTimeout(() => {
-            flashDiv.style.opacity = '0'; // Fade out the flash div
-        }, 1000); // Delay for the fade-out effect
+            elements.flashDiv.style.opacity = '0';
+        }, 600); // Reduced from 1000ms
 
-        // Determine the correct endpoint based on whether it's the first capture
         const endpoint = isFirstCapture ? '/capture' : '/capture_next';
 
-        setTimeout(() => {
-            fetch(endpoint)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('Photo captured successfully:', data);
-                        showQRCodeOrOfflineMessage(data); // Use new function for offline/online handling
-                        showPostCaptureModal(); // Show the modal after capture
-                    } else {
-                        console.error('Capture failed:', data.message);
-                        alert('Fejl ved billede: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error capturing photo:', error);
-                    alert('Netværksfejl ved billede optagelse');
-                });
+        // Start capture request immediately, don't wait
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Photo captured successfully:', data);
+                    showQRCodeOrOfflineMessage(data);
+                    showPostCaptureModal();
+                } else {
+                    console.error('Capture failed:', data.message);
+                    alert('Fejl ved billede: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error capturing photo:', error);
+                alert('Netværksfejl ved billede optagelse');
+            });
 
-            isFirstCapture = false; // After the first capture, switch flag off
-        }, 500);
+        isFirstCapture = false;
     }
 
     function showQRCodeOrOfflineMessage(data) {
-        var qrCodeElement = document.getElementById("qrCode");
         var modalBodyElement = document.querySelector("#postCaptureModal .modal-body h4");
         
-        qrCodeElement.innerHTML = ''; // Clear previous content
+        elements.qrCode.innerHTML = ''; // Clear previous content
         
         if (data.offline_mode) {
-            // Show offline message instead of QR code
             const offlineMessage = data.offline_message || "Arrangørene får billederne efter arrangement";
             modalBodyElement.textContent = offlineMessage;
             
-            // Create offline mode indicator
-            qrCodeElement.innerHTML = `
+            elements.qrCode.innerHTML = `
                 <div style="text-align: center; padding: 60px 20px; border: 3px dashed #04cf5c; border-radius: 15px; background-color: rgba(4, 207, 92, 0.1);">
                     <div style="font-size: 48px; margin-bottom: 20px;">📱</div>
                     <div style="font-size: 24px; color: #04cf5c; font-weight: bold; margin-bottom: 10px;">Offline Mode</div>
                     <div style="font-size: 16px; color: #ffffff; opacity: 0.8;">Billederne gemmes lokalt</div>
                 </div>
             `;
-            
-            console.log('Operating in offline mode');
         } else {
-            // Show QR code as normal
             modalBodyElement.textContent = "Dine billeder er samlet her:";
             
             if (data.url) {
-                new QRCode(qrCodeElement, {
+                new QRCode(elements.qrCode, {
                     text: data.url,
                     width: 512,
                     height: 512,
@@ -535,15 +563,12 @@
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
                 });
-                console.log('QR Code generated for:', data.url);
             } else {
-                // Fallback if URL is missing
-                qrCodeElement.innerHTML = '<div style="text-align: center; padding: 40px; font-size: 18px; color: #ff6b6b;">QR kode kunne ikke genereres</div>';
+                elements.qrCode.innerHTML = '<div style="text-align: center; padding: 40px; font-size: 18px; color: #ff6b6b;">QR kode kunne ikke genereres</div>';
             }
         }
     }
 
-    // Keep legacy function for backward compatibility
     function showQRCode(url) {
         showQRCodeOrOfflineMessage({ url: url, offline_mode: false });
     }
@@ -552,61 +577,67 @@
         let postCaptureModal = new bootstrap.Modal(document.getElementById('postCaptureModal'));
         postCaptureModal.show();
 
-        // Clear any existing countdown before starting a new one
         if (countdownInterval !== null) {
             clearInterval(countdownInterval);
         }
 
-        let countdown = 30; // 30 seconds countdown
-        document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+        let countdown = 30;
+        const declineBtn2 = document.getElementById('declineButton2');
+        declineBtn2.innerText = `Nej tak (${countdown}s)`;
 
         countdownInterval = setInterval(() => {
             countdown--;
-            document.getElementById('declineButton2').innerText = `Nej tak (${countdown}s)`;
+            declineBtn2.innerText = `Nej tak (${countdown}s)`;
             if (countdown <= 0) {
                 clearInterval(countdownInterval);
-                countdownInterval = null; // Reset the interval reference
-                postCaptureModal.hide(); // Hide the modal
-                reset(); // Call the reset function
+                countdownInterval = null;
+                postCaptureModal.hide();
+                reset();
             }
         }, 1000);
     }
 
     function reset() {
-        clearInterval(countdownInterval); // Clear the countdown interval if it's running
+        clearInterval(countdownInterval);
         isFirstCapture = false;
-        const myDiv = document.getElementById('myDiv');
-        const spinner = document.getElementById('spinner');
-        const flashDiv = document.getElementById('flash');
 
-        document.querySelector('.camera-background').setAttribute('onclick', 'callFlaskRouteAndToggleDiv()');
+        elements.cameraBackground.setAttribute('onclick', 'callFlaskRouteAndToggleDiv()');
 
-        // Reset the content and style of myDiv to its original state
-        myDiv.innerHTML = '<h1 style="font-size: 75px;">TRYK HER</h1>' +
+        // Batch DOM updates for better performance
+        elements.myDiv.innerHTML = '<h1 style="font-size: 75px;">TRYK HER</h1>' +
             '<div class="green-box-right rounded-2">' +
             '<h4>FOR SELFIE</h4></div>' +
             '<div class="green-box-left rounded-2">' +
             '<h4 class="fw-light">LYD & LYS</h4></div>';
 
-        myDiv.style.backgroundColor = 'black'; // Restore the black background
-        myDiv.style.animation = 'pulse 1s infinite alternate'; // Re-enable the pulse animation
+        // Apply all style changes at once
+        Object.assign(elements.myDiv.style, {
+            backgroundColor: 'black',
+            animation: 'pulse 1s infinite alternate',
+            opacity: '1'
+        });
 
-        myDiv.style.opacity = '1';
-        spinner.style.opacity = '0';
-        flashDiv.style.opacity = '0';
+        elements.spinner.style.opacity = '0';
+        elements.flashDiv.style.opacity = '0';
+        elements.myDiv.classList.remove('hidden');
 
-        myDiv.classList.remove('hidden'); // Remove the 'hidden' class if it was added
-
-        isFirstCapture = true; // Reset to true for a new initial capture
-        document.getElementById("qrCode").innerHTML = ''; // Clear the QR code
+        isFirstCapture = true;
+        elements.qrCode.innerHTML = '';
 
         var postCaptureModalElement = document.getElementById('postCaptureModal');
         var modal = bootstrap.Modal.getInstance(postCaptureModalElement);
         if (modal) {
-            modal.hide(); // Hide the modal if it's still showing
+            modal.hide();
         }
     }
-</script>
 
+    // Preload critical functions on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Warm up the QR code library
+        if (typeof QRCode !== 'undefined') {
+            console.log('QR Code library ready');
+        }
+    });
+</script>
 
 </html>

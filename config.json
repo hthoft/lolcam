@@ -29,7 +29,7 @@
     "google_drive": {
         "scopes": ["https://www.googleapis.com/auth/drive"],
         "token_path": "token.json",
-        "default_folder_id": "1KolDC9-iOvXNaZ2ZLztKF-TSVEjTjVt3",
+        "default_folder_id": "1KJEg5zNsqZr6zJhGA_rfAn6GnmzT5KwW",
         "credentials_file": "credentials.json"
     },
     "offline_mode": {
