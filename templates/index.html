@@ -503,37 +503,54 @@
 
     let isFirstCapture = true;
 
-    function flashAndCapture() {
-        // Immediate flash feedback
-        elements.flashDiv.style.opacity = '1';
+function flashAndCapture() {
+    // Immediate flash feedback
+    elements.flashDiv.style.opacity = '1';
 
-        // Shorter flash duration for snappier feel
-        setTimeout(() => {
-            elements.flashDiv.style.opacity = '0';
-        }, 600); // Reduced from 1000ms
+    // Shorter flash duration for snappier feel
+    setTimeout(() => {
+        elements.flashDiv.style.opacity = '0';
+    }, 600);
 
-        const endpoint = isFirstCapture ? '/capture' : '/capture_next';
+    const endpoint = isFirstCapture ? '/capture' : '/capture_next';
 
-        // Start capture request immediately, don't wait
-        fetch(endpoint)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Photo captured successfully:', data);
-                    showQRCodeOrOfflineMessage(data);
-                    showPostCaptureModal();
-                } else {
-                    console.error('Capture failed:', data.message);
+    // Start capture request immediately, don't wait
+    fetch(endpoint)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Photo captured successfully:', data);
+                showQRCodeOrOfflineMessage(data);
+                showPostCaptureModal();
+            } else {
+                console.error('Capture failed:', data.message);
+                // Only show error alert for actual failures, not offline mode
+                if (!data.offline_mode) {
                     alert('Fejl ved billede: ' + data.message);
+                } else {
+                    // If it's an offline mode "error", treat it as success
+                    showQRCodeOrOfflineMessage({
+                        success: true,
+                        offline_mode: true,
+                        offline_message: data.message || "Arrangørene får billederne efter arrangement"
+                    });
+                    showPostCaptureModal();
                 }
-            })
-            .catch(error => {
-                console.error('Error capturing photo:', error);
-                alert('Netværksfejl ved billede optagelse');
+            }
+        })
+        .catch(error => {
+            console.error('Error capturing photo:', error);
+            // For network errors, assume offline mode
+            showQRCodeOrOfflineMessage({
+                success: true,
+                offline_mode: true,
+                offline_message: "Arrangørene får billederne efter arrangement"
             });
+            showPostCaptureModal();
+        });
 
-        isFirstCapture = false;
-    }
+    isFirstCapture = false;
+}
 
     function showQRCodeOrOfflineMessage(data) {
         var modalBodyElement = document.querySelector("#postCaptureModal .modal-body h4");
