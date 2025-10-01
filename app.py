@@ -69,7 +69,7 @@ def test_network_at_startup():
 try:
     picam2 = Picamera2()
     preview_config = picam2.create_preview_configuration(main={"size": tuple(config["camera"]["preview_size"])})
-    capture_config = {"main": {"size": tuple(config["camera"]["capture_size"])}}
+    capture_config = picam2.create_still_configuration(main={"size": tuple(config["camera"]["capture_size"])})
     picam2.configure(preview_config)
     picam2.start()
     logging.info("PiCamera initialized and started")
@@ -149,8 +149,8 @@ def capture():
         except Exception as e:
             logging.error(f"Error sending serial signal: {e}")
 
-        # Capture and save photo
-        picam2.capture_file(filename)
+        # Switch to capture configuration temporarily
+        picam2.switch_mode_and_capture_file(capture_config, filename)
         logging.info(f"Photo captured and saved to {filename}")
 
         # Apply overlay
@@ -195,7 +195,7 @@ def capture():
 
 @app.route("/capture_next", methods=['GET'])
 def capture_next():
-    global offline_mode
+    global offline_mode, folder_id
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     logging.info("Capture Next endpoint accessed")
     
@@ -210,8 +210,8 @@ def capture_next():
         except Exception as e:
             logging.error(f"Error sending serial signal: {e}")
 
-        # Capture and save photo
-        picam2.capture_file(filename)
+        # Switch to capture configuration temporarily
+        picam2.switch_mode_and_capture_file(capture_config, filename)
         logging.info(f"Photo captured and saved to {filename}")
 
         # Apply overlay
@@ -220,9 +220,11 @@ def capture_next():
         base_image.save(filename)
         logging.info("Overlay applied to the photo")
 
-        # If online mode and we have a folder_id, try to upload
-        if not offline_mode and folder_id:
+        # If online mode, try to upload (use existing folder_id or create new one)
+        if not offline_mode:
             try:
+                if not folder_id:
+                    folder_id = create_folder_in_drive()
                 upload_picture(filename, folder_id)
                 logging.info("Photo uploaded to Drive")
                 return jsonify({
@@ -233,6 +235,7 @@ def capture_next():
                 })
             except Exception as e:
                 logging.error(f"Upload failed: {e}")
+                # Fall through to offline mode if upload fails
         
         # Offline response - this is the normal flow when offline
         logging.info("Photo saved locally (offline mode)")
@@ -293,13 +296,18 @@ def send_pulse():
 def generate_frames():
     logging.info("Generating video frames")
     while True:
-        frame = picam2.capture_array()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        flag, encodedImage = cv2.imencode(".jpg", frame)
-        if not flag:
+        try:
+            frame = picam2.capture_array()
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            flag, encodedImage = cv2.imencode(".jpg", frame)
+            if not flag:
+                continue
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+        except Exception as e:
+            logging.error(f"Error generating frame: {e}")
+            time.sleep(0.1)  # Small delay if there's an error
             continue
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
 if __name__ == '__main__':
     try:
@@ -307,7 +315,7 @@ if __name__ == '__main__':
         create_picture_folder()
         apply_zoom()
         
-        # Test network connectivity once at startup
+        # Test network connectivity once at startup - this is already correct!
         test_network_at_startup()
         
         app.run(host=config["app"]["host"], port=config["app"]["port"], debug=config["app"]["debug"], use_reloader=False)
