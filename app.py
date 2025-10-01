@@ -252,60 +252,6 @@ def capture_next():
             "offline_mode": offline_mode
         }), 500
 
-@app.route("/capture_next", methods=['GET'])
-def capture_next():
-    global offline_mode
-    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    logging.info("Capture Next endpoint accessed")
-    
-    try:
-        filename = f"{config['directories']['pictures_path']}/{datetime.now().strftime('%Y-%m-%d')}/{current_datetime}.jpg"
-        
-        # Send serial signal
-        try:
-            ser.write(b'1')
-            time.sleep(0.5)
-            logging.info("Serial signal sent")
-        except Exception as e:
-            logging.error(f"Error sending serial signal: {e}")
-
-        # Capture and save photo
-        picam2.capture_file(filename)
-        logging.info(f"Photo captured and saved to {filename}")
-
-        # Apply overlay
-        base_image = Image.open(filename)
-        base_image.paste(overlay_image, (0, 0), overlay_image)
-        base_image.save(filename)
-        logging.info("Overlay applied to the photo")
-
-        # If online mode and we have a folder_id, try to upload
-        if not offline_mode and folder_id:
-            try:
-                upload_picture(filename, folder_id)
-                logging.info("Photo uploaded to Drive")
-                return jsonify({
-                    "success": True, 
-                    "message": "Photo captured and uploaded successfully.",
-                    "url": config['drive']['base_url'] + folder_id,
-                    "offline_mode": False
-                })
-            except Exception as e:
-                logging.error(f"Upload failed: {e}")
-        
-        # Offline response
-        logging.info("Photo saved locally")
-        return jsonify({
-            "success": True, 
-            "message": "Photo captured and saved locally.",
-            "offline_mode": True,
-            "offline_message": config['offline_mode']['message']
-        })
-        
-    except Exception as e:
-        logging.error(f"Error capturing photo: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
-
 @app.route('/settings', methods=['POST'])
 def settings():
     logging.info("Settings endpoint accessed")
