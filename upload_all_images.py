@@ -88,10 +88,13 @@ class GoogleDriveUploader:
             return None
 
     def get_pictures_directory(self):
-        """Get the pictures directory path - looking in Pictures/"""
-        # Get the absolute path to Pictures/ from current directory
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pictures_path = os.path.join(current_dir, 'Pictures')
+        """Get the pictures directory path - looking in /home/lol/Pictures"""
+        # Since you're running from /home/lol/, we can use the home directory
+        home_dir = os.path.expanduser('~')
+        pictures_path = os.path.join(home_dir, 'Pictures')
+        
+        # Alternative: Use absolute path directly
+        # pictures_path = '/home/lol/Pictures'
         
         logging.info(f"Looking for pictures in: {pictures_path}")
         return pictures_path
