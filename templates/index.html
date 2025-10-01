@@ -553,38 +553,40 @@ function flashAndCapture() {
 }
 
     function showQRCodeOrOfflineMessage(data) {
-        var modalBodyElement = document.querySelector("#postCaptureModal .modal-body h4");
+    var modalBodyElement = document.querySelector("#postCaptureModal .modal-body h4");
+    
+    elements.qrCode.innerHTML = ''; // Clear previous content
+    
+    if (data.offline_mode) {
+        const offlineMessage = data.offline_message || "Arrangørerne får billederne efter arrangementet";
+        modalBodyElement.textContent = "Offline Mode - Arrangørerne får billederne efter arrangementet.";
         
-        elements.qrCode.innerHTML = ''; // Clear previous content
-        
-        if (data.offline_mode) {
-            const offlineMessage = data.offline_message || "Arrangørene får billederne efter arrangement";
-            modalBodyElement.textContent = offlineMessage;
-            
-            elements.qrCode.innerHTML = `
-                <div style="text-align: center; padding: 60px 20px; border: 3px dashed #04cf5c; border-radius: 15px; background-color: rgba(4, 207, 92, 0.1);">
-                    <div style="font-size: 48px; margin-bottom: 20px;">📱</div>
-                    <div style="font-size: 24px; color: #04cf5c; font-weight: bold; margin-bottom: 10px;">Offline Mode</div>
-                    <div style="font-size: 16px; color: #ffffff; opacity: 0.8;">Billederne gemmes lokalt</div>
+        elements.qrCode.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; border: 3px dashed #04cf5c; border-radius: 15px; background-color: rgba(4, 207, 92, 0.1); max-width: 400px; margin: 0 auto;">
+                <div style="margin-bottom: 20px;">
+                    <img src="{{ url_for('static', filename='offline-svgrepo-com.svg') }}" alt="Offline Icon" style="width: 80px; height: 80px; filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(98%) contrast(105%);">
                 </div>
-            `;
+                <div style="font-size: 24px; color: #04cf5c; font-weight: bold; margin-bottom: 15px;">Offline Mode</div>
+                <div style="font-size: 16px; color: #ffffff; opacity: 0.8; line-height: 1.4;">Arrangørerne får billederne efter arrangementet.</div>
+            </div>
+        `;
+    } else {
+        modalBodyElement.textContent = "Dine billeder er samlet her:";
+        
+        if (data.url) {
+            new QRCode(elements.qrCode, {
+                text: data.url,
+                width: 512,
+                height: 512,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
         } else {
-            modalBodyElement.textContent = "Dine billeder er samlet her:";
-            
-            if (data.url) {
-                new QRCode(elements.qrCode, {
-                    text: data.url,
-                    width: 512,
-                    height: 512,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            } else {
-                elements.qrCode.innerHTML = '<div style="text-align: center; padding: 40px; font-size: 18px; color: #ff6b6b;">QR kode kunne ikke genereres</div>';
-            }
+            elements.qrCode.innerHTML = '<div style="text-align: center; padding: 40px; font-size: 18px; color: #ff6b6b;">QR kode kunne ikke genereres</div>';
         }
     }
+}
 
     function showQRCode(url) {
         showQRCodeOrOfflineMessage({ url: url, offline_mode: false });
